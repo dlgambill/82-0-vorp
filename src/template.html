@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>82-0 VORP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a scorer's sheet. One loud element (the projected record), everything else ruled rows. */
+:root{
+  --bg:#e9edf1; --surface:#ffffff; --ink:#0d1a2c; --muted:#566376; --line:#c9d1da;
+  --accent:#d9480f; --on-accent:#ffffff; --win:#12754a; --loss:#b3261e;
+  --display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0a121d; --surface:#131f30; --ink:#edf1f6; --muted:#96a3b5; --line:#293950;
+    --accent:#ff6b2c; --on-accent:#0a121d; --win:#45c486; --loss:#ff7466; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0a121d; --surface:#131f30; --ink:#edf1f6; --muted:#96a3b5; --line:#293950;
+  --accent:#ff6b2c; --on-accent:#0a121d; --win:#45c486; --loss:#ff7466; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+main{max-width:680px;margin:0 auto;padding:16px 16px 48px;display:flex;flex-direction:column;gap:20px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:10px}
+.mark{font-family:var(--display);font-weight:900;font-size:26px;letter-spacing:.02em;line-height:1;margin:0}
+.mark b{color:var(--accent);font-weight:900}
+.toggle{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--muted)}
+.toggle input{width:18px;height:18px;accent-color:var(--accent);margin:0}
+
+.board{display:flex;flex-direction:column;gap:4px}
+.record{font-family:var(--display);font-weight:900;line-height:.82;font-size:clamp(104px,34vw,216px);letter-spacing:-.01em;margin:6px 0 2px;display:flex;align-items:baseline;gap:.06em}
+.record .dash{color:var(--accent)}
+.record.perfect{color:var(--accent)}
+.record.perfect .dash{color:var(--ink)}
+.chain{font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 14px}
+.chain strong{color:var(--ink);font-family:var(--mono);font-weight:600}
+.verdict{font-family:var(--display);font-weight:800;font-size:30px;line-height:1.05;text-transform:uppercase;letter-spacing:.02em;margin:8px 0 0;text-wrap:balance}
+
+.lineup{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:4px}
+.lineup li{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);min-height:48px}
+.lineup li:last-child{border-bottom:0}
+.lineup li:not(.filled){min-height:34px;padding-top:5px;padding-bottom:5px}
+.pos{font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:.03em}
+.lineup .who{min-width:0}
+.lineup .name{font-weight:600;overflow-wrap:anywhere}
+.lineup .sub{font-size:12px;color:var(--muted)}
+.lineup .open{color:var(--muted);font-size:14px}
+.lineup li.filled .pos{color:var(--accent)}
+.lineup li.fresh{animation:land .5s var(--ease)}
+@keyframes land{from{background:color-mix(in srgb,var(--accent) 22%,var(--surface))}to{background:var(--surface)}}
+.v{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums;font-size:15px}
+
+.draw{display:flex;flex-direction:column;gap:12px}
+.draw h2{font-family:var(--display);font-weight:900;font-size:clamp(34px,10vw,52px);line-height:.95;text-transform:uppercase;margin:2px 0 0;text-wrap:balance}
+.draw h2 span{color:var(--accent)}
+.draw.spinning h2{opacity:.55}
+.rerolls{display:flex;flex-wrap:wrap;gap:8px}
+.btn{border:1.5px solid var(--ink);background:transparent;border-radius:4px;padding:10px 14px;font-weight:600;font-size:14px;min-height:44px;transition:transform .15s var(--ease),background .15s var(--ease)}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.38;cursor:not-allowed;border-style:dashed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+
+.pool{list-style:none;margin:0;padding:0;border-top:2px solid var(--ink)}
+.pool li{border-bottom:1px solid var(--line)}
+.pick{width:100%;display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:11px 4px;background:none;border:0;text-align:left;min-height:52px}
+.pick .name{font-weight:600;overflow-wrap:anywhere}
+.pick .sub{font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:11px;font-weight:600;border:1px solid var(--line);border-radius:3px;padding:1px 5px;color:var(--ink)}
+.chip.sec{border-style:dashed;color:var(--muted)}
+.chip.off{opacity:.4;text-decoration:line-through}
+.pick[disabled]{cursor:not-allowed}
+.pick[disabled] .name,.pick[disabled] .v{color:var(--muted);font-weight:500}
+.pick:not([disabled]):hover .name{color:var(--accent)}
+.where{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 4px 12px;font-size:13px;color:var(--muted)}
+.note{font-size:13px;color:var(--muted);margin:0}
+
+.strip{display:grid;grid-template-columns:repeat(41,1fr);gap:2px}
+.strip i{aspect-ratio:1/1.5;background:var(--line);border-radius:1px}
+.strip i.w{background:var(--win)}
+.strip i.l{background:transparent;box-shadow:inset 0 0 0 1.5px var(--loss)}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:8px;height:12px;border-radius:1px;margin-right:5px;vertical-align:-1px}
+.legend .w{background:var(--win)} .legend .l{box-shadow:inset 0 0 0 1.5px var(--loss)}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.losses{font-size:13px;color:var(--muted);margin:0}
+
+details{border-top:1px solid var(--line);padding-top:12px;font-size:14px}
+summary{font-weight:600;cursor:pointer}
+details p{max-width:62ch;margin:10px 0 0;color:var(--muted)}
+details p strong{color:var(--ink)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1 class="mark">82<b>–</b>0 <span style="font-weight:600">VORP</span></h1>
+    <label class="toggle" for="blind"><input type="checkbox" id="blind"> Hide VORP</label>
+  </header>
+  <section class="board" id="board" aria-live="polite"></section>
+  <ol class="lineup" id="lineup" aria-label="Your starting five"></ol>
+  <section class="draw" id="stage"></section>
+  <details>
+    <summary>How wins are decided</summary>
+    <p><strong>Each player counts for his best VORP season</strong> with that franchise in that decade (Basketball-Reference, through 2025-26). Short seasons are scaled to 82 games.</p>
+    <p><strong>Before 1973-74 there is no VORP,</strong> so those seasons (1949-50 on) use an estimate from Win Shares: VORP = 0.471 x Win Shares - 0.85. On seasons that have both stats the estimate is typically within 0.6. Estimates are marked with ~.</p>
+    <p><strong>Positions.</strong> Solid tags are where he was listed with that team. Dashed tags are secondary spots: spots where he played at least 20% of his minutes for that team in a season (tracked since 1996-97). Before 2000, it is any position he was listed at in his career. No penalty for using one.</p>
+    <p><strong>Team VORP becomes a net rating.</strong> A team of replacement players is about 10 points worse than average per 100 possessions, and every point of VORP buys one back. Your bench is replacement level, so net rating = team VORP minus 10.</p>
+    <p><strong>Then 82 games get played.</strong> Each night adds the opponent's strength, home court (2.5 points) and normal game-to-game swing. A +10 team wins about 8 of 10. Going 82-0 needs roughly 38 VORP or better, plus luck.</p>
+    <p id="best" class="num"></p>
+  </details>
+</main>
+<script>
+const COMBOS=__DATA__;
+const POS=["PG","SG","SF","PF","C"];
+const OPP=["ATL","BOS","BRK","CHI","CHO","CLE","DAL","DEN","DET","GSW","HOU","IND","LAC","LAL","MEM","MIA","MIL","MIN","NOP","NYK","OKC","ORL","PHI","PHO","POR","SAC","SAS","TOR","UTA","WAS"];
+const SIGMA=12, OPP_SD=4.5, HOME=2.5, ROUNDS=5;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+
+/* ---- pure model ---- */
+function phi(x){const t=1/(1+.2316419*Math.abs(x)),d=.3989423*Math.exp(-x*x/2);
+  const p=d*t*(.3193815+t*(-.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return x>0?1-p:p}
+function netRating(vorp){return vorp-10}
+function expectedWins(vorp){return 82*phi(netRating(vorp)/Math.hypot(SIGMA,OPP_SD))}
+function gauss(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function simSeason(vorp){const nr=netRating(vorp),g=[];
+  for(let i=0;i<82;i++){const home=i%2===0,opp=OPP[Math.floor(Math.random()*OPP.length)];
+    let m=Math.round(nr-gauss()*OPP_SD+(home?HOME:-HOME)+gauss()*SIGMA);
+    if(m===0)m=Math.random()<phi(nr/20)?2:-2;
+    g.push({m,opp,home})}
+  return g}
+
+/* ---- state ---- */
+let S;
+function fresh(){return{round:1,slots:{PG:null,SG:null,SF:null,PF:null,C:null},ci:-1,teamRe:false,decRe:false,bothRe:false,
+  blind:S?S.blind:false,used:[],ask:null,fresh:null,season:null,shown:0}}
+const openSlots=()=>POS.filter(p=>!S.slots[p]);
+const drafted=()=>POS.map(p=>S.slots[p]).filter(Boolean);
+const teamVorp=()=>drafted().reduce((a,p)=>a+p.v,0);
+const taken=n=>drafted().some(p=>p.n===n);
+function eligible(pl){const o=openSlots();return taken(pl[0])?[]:POS.filter(p=>o.includes(p)&&allPos(pl).includes(p))}
+function allPos(pl){return pl[1].split("/").concat(pl[4]?pl[4].split("/"):[])}
+function playable(i){return COMBOS[i].p.some(pl=>eligible(pl).length)}
+function candidates(filter){const out=[];COMBOS.forEach((c,i)=>{if(i!==S.ci&&!S.used.includes(i)&&playable(i)&&(!filter||filter(c)))out.push(i)});return out}
+const pickOne=a=>a[Math.floor(Math.random()*a.length)];
+
+function spin(filter,animate){const pool=candidates(filter);if(!pool.length)return false;
+  const target=pickOne(pool);S.ask=null;
+  if(!animate||reduce){S.ci=target;render();return true}
+  let n=0;$("stage").classList.add("spinning");
+  const t=setInterval(()=>{S.ci=pickOne(pool);drawHead();if(++n>9){clearInterval(t);S.ci=target;$("stage").classList.remove("spinning");render()}},70);
+  return true}
+
+function place(pl,pos){S.slots[pos]={n:pl[0],v:pl[2],s:pl[3],t:pl[6]||COMBOS[S.ci].n,e:pl[5]?1:0};S.fresh=pos;S.used.push(S.ci);S.ask=null;
+  if(S.round>=ROUNDS){S.round=ROUNDS+1;S.ci=-1;render()}else{S.round++;spin(null,true);render()}}
+
+function play(){S.season=simSeason(teamVorp());S.shown=reduce?82:0;render();
+  if(reduce)return finish();
+  const t=setInterval(()=>{S.shown++;drawBoard();drawStrip();if(S.shown>=82){clearInterval(t);finish()}},38)}
+function finish(){const w=S.season.filter(g=>g.m>0).length;
+  try{const b=JSON.parse(localStorage.getItem("vorp820best")||"null");
+    if(!b||w>b.w)localStorage.setItem("vorp820best",JSON.stringify({w,v:+teamVorp().toFixed(1)}))}catch(e){}
+  render()}
+
+/* ---- render ---- */
+const fmt=v=>(v>=0?"":"−")+Math.abs(v).toFixed(1);
+function verdict(w){return w===82?"Perfect season":w>=74?"Better than the 73-9 Warriors":w>=65?"All-time great team":w>=57?"Title favorite":w>=48?"Playoff lock":w>=41?"Winning record":w>=28?"Lottery bound":w>=1?"Tank commander":"Winless. Somehow."}
+function drawBoard(){const tv=teamVorp(),nr=netRating(tv),hide=S.blind&&!S.season;let w,l,label,extra="";
+  if(S.season){const g=S.season.slice(0,S.shown);w=g.filter(x=>x.m>0).length;l=g.length-w;
+    label=S.shown<82?"Game "+S.shown+" of 82":"Final record"}
+  else{w=Math.round(expectedWins(tv));l=82-w;label=drafted().length===ROUNDS?"Projected record":"Projected with "+drafted().length+" of 5 drafted"}
+  const done=S.season&&S.shown>=82;
+  if(done)extra='<p class="verdict">'+verdict(w)+"</p>";
+  $("board").innerHTML='<div class="eyebrow">'+label+'</div>'+
+    '<div class="record'+(done&&w===82?" perfect":"")+'" aria-label="'+(hide?"hidden":w+" wins, "+l+" losses")+'">'+(hide?'??<span class="dash">–</span>??':w+'<span class="dash">–</span>'+l)+"</div>"+
+    (hide?'<div class="chain">VORP is hidden until the season is played.</div>':
+    '<div class="chain"><span>Team VORP <strong>'+fmt(tv)+'</strong></span><span>Net rating <strong>'+(nr>0?"+":"")+fmt(nr)+'</strong></span><span>Win odds per game <strong>'+Math.round(phi(nr/Math.hypot(SIGMA,OPP_SD))*100)+"%</strong></span></div>")+extra}
+function drawLineup(){const hide=S.blind&&!S.season;
+  $("lineup").innerHTML=POS.map(p=>{const x=S.slots[p];return x?
+    '<li class="filled'+(S.fresh===p?" fresh":"")+'"><span class="pos">'+p+'</span><span class="who"><div class="name">'+esc(x.n)+'</div><div class="sub">'+esc(x.t)+", "+(x.s-1)+"-"+String(x.s).slice(2)+'</div></span><span class="v">'+(hide?"?":(x.e?"~":"")+fmt(x.v))+"</span></li>":
+    '<li><span class="pos">'+p+'</span><span class="open">Open</span><span></span></li>'}).join("");S.fresh=null}
+function drawHead(){const c=COMBOS[S.ci],h=document.querySelector("#stage h2");if(c&&h)h.innerHTML=esc(c.n)+" <span>"+c.d+"s</span>"}
+function drawStrip(){const el=$("strip");if(!el)return;
+  el.innerHTML=S.season.map((g,i)=>i<S.shown?'<i class="'+(g.m>0?"w":"l")+'" title="Game '+(i+1)+(g.home?" vs ":" at ")+g.opp+": "+(g.m>0?"W by ":"L by ")+Math.abs(g.m)+'"></i>':"<i></i>").join("")}
+function drawStage(){const st=$("stage");
+  if(S.season){const done=S.shown>=82,L=S.season.map((g,i)=>({g,i})).filter(x=>x.g.m<0);
+    let losses="";
+    if(done&&L.length&&L.length<=6)losses='<p class="losses">Losses: '+L.map(x=>"game "+(x.i+1)+(x.g.home?" vs ":" at ")+x.g.opp+" by "+(-x.g.m)).join(", ")+".</p>";
+    st.innerHTML='<div class="eyebrow">The season, game by game</div><div><div class="strip" id="strip"></div><div class="legend"><span><i class="w"></i>Win</span><span><i class="l"></i>Loss</span></div></div>'+losses+
+      (done?'<div class="actions"><button class="btn primary" data-a="again">Draft a new team</button><button class="btn" data-a="replay">Replay this season</button><button class="btn" data-a="copy">Copy result</button></div>':"");
+    drawStrip();return}
+  if(S.round>ROUNDS){st.innerHTML='<div class="eyebrow">Draft complete</div><h2>Five picked. <span>82 to play.</span></h2><div class="actions"><button class="btn primary" data-a="play">Play the season</button><button class="btn" data-a="again">Start over</button></div>';return}
+  const c=COMBOS[S.ci],hide=S.blind;
+  const shown=c.p.filter(pl=>eligible(pl).length),hidden=c.p.length-shown.length;
+  const rows=shown.sort((a,b)=>hide?a[0].localeCompare(b[0]):b[2]-a[2]).map((pl,i)=>{const el=eligible(pl),open=openSlots(),idx=c.p.indexOf(pl);
+    const prim=pl[1].split("/");const chips=allPos(pl).map(p=>'<span class="chip'+(open.includes(p)?"":" off")+(prim.includes(p)?"":" sec")+'">'+p+"</span>").join("");
+    const why=taken(pl[0])?"Already on your team":el.length?"":"No open spot";
+    return "<li><button class=\"pick\" data-p=\""+idx+"\""+(el.length?"":" disabled")+'><span><div class="name">'+esc(pl[0])+'</div><div class="sub">'+chips+"<span>"+(hide?"":"Best: "+(pl[3]-1)+"-"+String(pl[3]).slice(2))+(why?(hide?"":" · ")+why:"")+'</span></div></span><span class="v">'+(hide?"":(pl[5]?"~":"")+fmt(pl[2]))+"</span></button>"+
+      (S.ask===idx?'<div class="where">Play him at '+el.map(p=>'<button class="btn" data-p="'+idx+'" data-pos="'+p+'">'+p+"</button>").join("")+"</div>":"")+"</li>"}).join("");
+  const canT=!S.teamRe&&candidates(x=>x.d===c.d&&x.f!==c.f).length,canD=!S.decRe&&candidates(x=>x.f===c.f&&x.d!==c.d).length,canB=!S.bothRe&&candidates(x=>x.f!==c.f&&x.d!==c.d).length;
+  st.innerHTML='<div><div class="eyebrow">Round '+S.round+" of "+ROUNDS+' · pick one player</div><h2></h2></div>'+
+    '<div class="rerolls"><button class="btn" data-a="team"'+(canT?"":" disabled")+">"+(S.teamRe?"Team reroll used":"Reroll team")+'</button><button class="btn" data-a="dec"'+(canD?"":" disabled")+">"+(S.decRe?"Decade reroll used":"Reroll decade")+"</button></div>"+
+    '<ul class="pool">'+rows+"</ul>"+'<p class="note">'+(hide?"VORP hidden. Listed A to Z.":"Number is VORP in his best season here, scaled to 82 games.")+" Dashed tags are secondary positions."+(!hide&&c.p.some(pl=>pl[5])?" ~ means estimated from Win Shares (before 1973-74).":"")+(hidden?" "+hidden+" player"+(hidden>1?"s":"")+" hidden with no open spot.":"")+"</p>";
+  drawHead()}
+function render(){drawBoard();drawLineup();drawStage();$("blind").checked=S.blind;$("blind").disabled=drafted().length>0&&!S.season?true:false;
+  try{const b=JSON.parse(localStorage.getItem("vorp820best")||"null");$("best").textContent=b?"Your best on this device: "+b.w+"-"+(82-b.w)+" (team VORP "+b.v+")":""}catch(e){}}
+
+/* ---- events ---- */
+$("stage").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.disabled)return;const a=b.dataset.a;
+  if(a==="team"){const c=COMBOS[S.ci];if(spin(x=>x.d===c.d&&x.f!==c.f,true))S.teamRe=true}
+  else if(a==="dec"){const c=COMBOS[S.ci];if(spin(x=>x.f===c.f&&x.d!==c.d,true))S.decRe=true}
+  else if(a==="both"){const c=COMBOS[S.ci];if(spin(x=>x.f!==c.f&&x.d!==c.d,true))S.bothRe=true}
+  else if(a==="play"||a==="replay")play();
+  else if(a==="again"){S=fresh();spin(null,false);scrollTo({top:0})}
+  else if(a==="copy"){const w=S.season.filter(g=>g.m>0).length;
+    const t="82-0 VORP: "+w+"-"+(82-w)+" ("+verdict(w)+")\n"+POS.map(p=>p+" "+S.slots[p].n+" ("+S.slots[p].t+" "+(S.slots[p].s-1)+"-"+String(S.slots[p].s).slice(2)+") "+S.slots[p].v.toFixed(1)).join("\n")+"\nTeam VORP "+teamVorp().toFixed(1);
+    navigator.clipboard.writeText(t).then(()=>{b.textContent="Copied"},()=>{b.textContent="Copy blocked"})}
+  else if(b.dataset.p!==undefined){const pl=COMBOS[S.ci].p[+b.dataset.p],el=eligible(pl);
+    if(b.dataset.pos)place(pl,b.dataset.pos);else if(el.length===1)place(pl,el[0]);else{S.ask=S.ask===+b.dataset.p?null:+b.dataset.p;drawStage()}}});
+$("blind").addEventListener("change",e=>{S.blind=e.target.checked;render()});
+
+function start(saved){S=fresh();
+  if(saved&&saved.slots&&saved.ci!==undefined){Object.assign(S,saved);if(S.season&&S.shown<82)S.shown=82;render();if(S.ci<0&&S.round<=ROUNDS)spin(null,false)}
+  else spin(null,false)}
+window.claude?.hot?.snapshot?.(()=>S);
+window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
+</script>
+</body>
+</html>
