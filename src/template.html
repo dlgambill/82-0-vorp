@@ -100,6 +100,14 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;bo
 .actions{display:flex;flex-wrap:wrap;gap:8px}
 .losses{font-size:13px;color:var(--muted);margin:0}
 
+.intro{display:none;flex-direction:column;gap:14px}
+body.pre .intro{display:flex}
+body.pre #board,body.pre #lineup,body.pre #stage{display:none}
+.pitch{font-family:var(--display);font-weight:800;font-size:clamp(28px,8.5cqw,44px);line-height:1;text-transform:uppercase;letter-spacing:.01em;margin:0;text-wrap:balance}
+.steps{list-style:none;margin:4px 0 0;padding:0;border-top:2px solid var(--ink)}
+.steps li{display:grid;grid-template-columns:34px 1fr;align-items:baseline;gap:8px;padding:11px 0;border-bottom:1px solid var(--line)}
+.steps b{font-family:var(--display);font-weight:900;font-size:26px;line-height:1;color:var(--accent)}
+.btn.big{font-size:17px;padding:14px 22px;min-height:54px;flex:1 1 220px;max-width:340px}
 details{border-top:1px solid var(--line);padding-top:12px;font-size:14px}
 summary{font-weight:600;cursor:pointer}
 details p{max-width:62ch;margin:10px 0 0;color:var(--muted)}
@@ -107,12 +115,25 @@ details p strong{color:var(--ink)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
-<body>
+<body class="pre">
 <main>
   <header>
     <h1 class="mark">82<b>–</b>0 <span style="font-weight:600">VORP</span></h1>
     <label class="toggle" for="blind"><input type="checkbox" id="blind"> Hide VORP</label>
   </header>
+  <section class="intro" id="intro">
+    <div class="eyebrow">NBA roster builder · wins decided by VORP</div>
+    <div class="record" aria-hidden="true">82<span class="dash">–</span>0</div>
+    <h2 class="pitch">Draft five players. Play 82 games. Lose none.</h2>
+    <ol class="steps">
+      <li><b>1</b><span>You get a random team and decade, like the 1990s Bulls.</span></li>
+      <li><b>2</b><span>Pick one player from it and put him at PG, SG, SF, PF or C.</span></li>
+      <li><b>3</b><span>After five picks, the full season plays out game by game.</span></li>
+    </ol>
+    <p class="note">You get one team reroll and one decade reroll per game. The number next to each player is his VORP, and a higher total means more wins.</p>
+    <div class="actions"><button class="btn primary big" id="go">Start the draft</button></div>
+    <p class="note num" id="best2"></p>
+  </section>
   <section class="board" id="board" aria-live="polite"></section>
   <ol class="lineup" id="lineup" aria-label="Your starting five"></ol>
   <section class="draw" id="stage"></section>
@@ -221,7 +242,7 @@ function drawStage(){const st=$("stage");
     '<ul class="pool">'+rows+"</ul>"+'<p class="note">'+(hide?"VORP hidden. Listed A to Z.":"Number is VORP in his best season here, scaled to 82 games.")+" Dashed tags are secondary positions."+(!hide&&c.p.some(pl=>pl[5])?" ~ means estimated from Win Shares (before 1973-74).":"")+(hidden?" "+hidden+" player"+(hidden>1?"s":"")+" hidden with no open spot.":"")+"</p>";
   drawHead()}
 function render(){drawBoard();drawLineup();drawStage();$("blind").checked=S.blind;$("blind").disabled=drafted().length>0&&!S.season?true:false;
-  try{const b=JSON.parse(localStorage.getItem("vorp820best")||"null");$("best").textContent=b?"Your best on this device: "+b.w+"-"+(82-b.w)+" (team VORP "+b.v+")":""}catch(e){}}
+  try{const b=JSON.parse(localStorage.getItem("vorp820best")||"null");const s=b?"Your best on this device: "+b.w+"-"+(82-b.w)+" (team VORP "+b.v+")":"";$("best").textContent=s;$("best2").textContent=s}catch(e){}}
 
 /* ---- events ---- */
 $("stage").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.disabled)return;const a=b.dataset.a;
@@ -235,12 +256,14 @@ $("stage").addEventListener("click",e=>{const b=e.target.closest("button");if(!b
     navigator.clipboard.writeText(t).then(()=>{b.textContent="Copied"},()=>{b.textContent="Copy blocked"})}
   else if(b.dataset.p!==undefined){const pl=COMBOS[S.ci].p[+b.dataset.p],el=eligible(pl);
     if(b.dataset.pos)place(pl,b.dataset.pos);else if(el.length===1)place(pl,el[0]);else{S.ask=S.ask===+b.dataset.p?null:+b.dataset.p;drawStage()}}});
-$("blind").addEventListener("change",e=>{S.blind=e.target.checked;render()});
+$("blind").addEventListener("change",e=>{S.blind=e.target.checked;if(!document.body.classList.contains("pre"))render()});
+$("go").addEventListener("click",()=>{document.body.classList.remove("pre");spin(null,false);scrollTo({top:0})});
+function showBest(){try{const b=JSON.parse(localStorage.getItem("vorp820best")||"null");$("best2").textContent=b?"Your best on this device: "+b.w+"-"+(82-b.w)+" (team VORP "+b.v+")":""}catch(e){}}
 
 function start(saved){S=fresh();
-  if(saved&&saved.slots&&saved.ci!==undefined){Object.assign(S,saved);if(S.season&&S.shown<82)S.shown=82;render();if(S.ci<0&&S.round<=ROUNDS)spin(null,false)}
-  else spin(null,false)}
-window.claude?.hot?.snapshot?.(()=>S);
+  if(saved&&saved.slots&&saved.ci!==undefined){document.body.classList.remove("pre");Object.assign(S,saved);if(S.season&&S.shown<82)S.shown=82;render();if(S.ci<0&&S.round<=ROUNDS)spin(null,false)}
+  else showBest()}
+window.claude?.hot?.snapshot?.(()=>document.body.classList.contains("pre")?{}:S);
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
 </script>
 </body>
