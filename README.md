@@ -1,14 +1,15 @@
-# 82-0 VORP
+# Scorer's Table
 
-Can you build a team that never loses?
+Free sports stat games. You get a random team, you pick a player, and you try to beat the number.
 
-**Play it here: https://dlgambill.github.io/82-0-vorp/**
+**Play here: https://dlgambill.github.io/82-0-vorp/**
 
 No login, no install. It runs in your browser, phone or desktop.
 
-Also here: **Touchdown Chase** - https://dlgambill.github.io/82-0-vorp/touchdown-chase/
+## The games
 
-You get 20 random NFL teams and pick one running back for each. You only see names. Each back's career touchdowns go on your total, and you need 1,800 to win.
+- **82-0 VORP** (NBA) - https://dlgambill.github.io/82-0-vorp/82-0/ - Can you build a team that never loses?
+- **Touchdown Chase** (NFL) - https://dlgambill.github.io/82-0-vorp/touchdown-chase/ - You get 20 random NFL teams and pick one running back for each. You only see names. Each back's career touchdowns go on your total, and you need 1,800 to win.
 
 ## How 82-0 VORP works
 
@@ -40,4 +41,4 @@ Player stats are from Basketball-Reference, through the 2025-26 season. This is 
 
 ## For the curious
 
-The whole game is one file, `index.html`. The `src` folder has the page template and the scripts that build the player data into it.
+Each game is one page in its own folder. The `src` folder has the scripts that build the player data.
