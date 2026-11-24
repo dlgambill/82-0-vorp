@@ -6,7 +6,11 @@ Can you build a team that never loses?
 
 No login, no install. It runs in your browser, phone or desktop.
 
-## How it works
+Also here: **Touchdown Chase** - https://dlgambill.github.io/82-0-vorp/touchdown-chase/
+
+You get 20 random NFL teams and pick one running back for each. You only see names. Each back's career touchdowns go on your total, and you need 1,500 to win.
+
+## How 82-0 VORP works
 
 1. You get a random NBA team and decade, like the 1990s Bulls.
 2. Pick one player from that team and put him in an open spot: PG, SG, SF, PF or C.
