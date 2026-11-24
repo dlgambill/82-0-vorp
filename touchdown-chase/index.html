@@ -104,14 +104,14 @@ details p strong{color:var(--ink)}
 
   <section class="intro" id="intro">
     <div class="eyebrow">NFL running backs · career touchdowns</div>
-    <div class="big" aria-hidden="true">1,500</div>
-    <h2 class="pitch">20 teams. 20 running backs. 1,500 touchdowns.</h2>
+    <div class="big" aria-hidden="true">1,800</div>
+    <h2 class="pitch">20 teams. 20 running backs. 1,800 touchdowns.</h2>
     <ol class="steps">
       <li><b>1</b><span>You get a random NFL team.</span></li>
       <li><b>2</b><span>Pick any running back who ever played for them. You see names, not numbers.</span></li>
       <li><b>3</b><span>His career touchdowns go on your total, including the ones he scored for other teams.</span></li>
     </ol>
-    <p class="note">Every round is a fresh random draw, so the same team can come up twice. No rerolls, and each back can only be used once. A star who made a late-career stop somewhere still brings his whole career with him.</p>
+    <p class="note">Every round is a fresh random draw, so the same team can come up twice. No rerolls, and each back can only be used once. You need to average 90 a pick, so every round has to be a star. A star who made a late-career stop somewhere still brings his whole career with him.</p>
     <div class="actions"><button class="btn primary big2" id="go" disabled>Loading players</button></div>
     <p class="note num" id="best2"></p>
   </section>
@@ -128,7 +128,7 @@ details p strong{color:var(--ink)}
   </details>
 </main>
 <script>
-const TARGET=1500, ROUNDS=20;
+const TARGET=1800, ROUNDS=20;
 const TEAMS={ARI:["Arizona Cardinals","Includes the St. Louis and Phoenix Cardinals"],ATL:["Atlanta Falcons"],BAL:["Baltimore Ravens"],BUF:["Buffalo Bills"],CAR:["Carolina Panthers"],CHI:["Chicago Bears"],CIN:["Cincinnati Bengals"],CLE:["Cleveland Browns"],DAL:["Dallas Cowboys"],DEN:["Denver Broncos"],DET:["Detroit Lions"],GB:["Green Bay Packers"],HOU:["Houston Texans"],IND:["Indianapolis Colts","Includes the Baltimore Colts"],JAX:["Jacksonville Jaguars"],KC:["Kansas City Chiefs"],LAC:["Los Angeles Chargers","Includes the San Diego Chargers"],LAR:["Los Angeles Rams","Includes the St. Louis Rams"],LV:["Las Vegas Raiders","Includes the Oakland and Los Angeles Raiders"],MIA:["Miami Dolphins"],MIN:["Minnesota Vikings"],NE:["New England Patriots"],NO:["New Orleans Saints"],NYG:["New York Giants"],NYJ:["New York Jets"],PHI:["Philadelphia Eagles"],PIT:["Pittsburgh Steelers"],SEA:["Seattle Seahawks"],SF:["San Francisco 49ers"],TB:["Tampa Bay Buccaneers"],TEN:["Tennessee Titans","Includes the Houston Oilers"],WAS:["Washington Commanders","Includes every Washington era"]};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -152,7 +152,7 @@ const total=()=>S.picks.reduce((a,i)=>a+td(i),0);
 const done=()=>S.picks.length>=ROUNDS;
 
 /* ---- render ---- */
-function verdict(t){return t>=2000?"Hall of Fame draft":t>=1750?"All-Pro draft":t>=TARGET?"Target hit":t>=TARGET-150?"So close":t>=1000?"Came up short":"Back to the film room"}
+function verdict(t){return t>=2000?"Hall of Fame draft":t>=TARGET?"Target hit":t>=TARGET-150?"So close":t>=1200?"Came up short":"Back to the film room"}
 function drawBoard(){const t=total(),n=S.picks.length,left=ROUNDS-n,need=Math.max(0,TARGET-t);let h="";
   h+='<div class="eyebrow">'+(done()?"Final total":n?"Total after "+n+" of "+ROUNDS:"Your total")+"</div>";
   h+='<div class="big'+(t>=TARGET?" hit":"")+'">'+fmt(t)+"</div>";
