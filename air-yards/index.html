@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Air Yards</title>
+<script>/* Phone browser in "Desktop site" mode ignores the viewport tag and lays out ~980px wide. Zoom back to phone size. */
+(function(){var s=screen.width,w=window.innerWidth;if(s<600&&w>s*1.4)document.documentElement.style.zoom=w/s})();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a scorer's sheet, same system as 82-0 VORP. One loud element (the running total), everything else ruled rows. Each game brings its own accent color. */
+:root{
+  --bg:#e9edf1; --surface:#ffffff; --ink:#0d1a2c; --muted:#566376; --line:#c9d1da;
+  --accent:#1d5fa8; --on-accent:#ffffff;
+  --display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0a121d; --surface:#131f30; --ink:#edf1f6; --muted:#96a3b5; --line:#293950;
+    --accent:#62a8f5; --on-accent:#0a121d; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0a121d; --surface:#131f30; --ink:#edf1f6; --muted:#96a3b5; --line:#293950;
+  --accent:#62a8f5; --on-accent:#0a121d; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+main{container-type:inline-size;max-width:680px;margin:0 auto;padding:16px 16px 48px;display:flex;flex-direction:column;gap:20px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,summary:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.note{font-size:13px;color:var(--muted);margin:0}
+
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:10px}
+.back{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;align-self:flex-start}
+.mark{font-family:var(--display);font-weight:900;font-size:26px;letter-spacing:.02em;line-height:1;margin:0;text-transform:uppercase}
+.mark b{color:var(--accent);font-weight:900}
+
+.big{font-family:var(--display);font-weight:900;line-height:.82;font-size:clamp(64px,calc(var(--k,34)*1cqw),216px);letter-spacing:-.01em;margin:6px 0 2px}
+.big.hit{color:var(--accent)}
+.pitch{font-family:var(--display);font-weight:800;font-size:clamp(28px,8.5cqw,44px);line-height:1;text-transform:uppercase;letter-spacing:.01em;margin:0;text-wrap:balance}
+.steps{list-style:none;margin:4px 0 0;padding:0;border-top:2px solid var(--ink)}
+.steps li{display:grid;grid-template-columns:34px 1fr;align-items:baseline;gap:8px;padding:11px 0;border-bottom:1px solid var(--line)}
+.steps b{font-family:var(--display);font-weight:900;font-size:26px;line-height:1;color:var(--accent)}
+.intro{display:none;flex-direction:column;gap:14px}
+body.pre .intro{display:flex}
+body.pre #board,body.pre #stage{display:none}
+
+.board{display:flex;flex-direction:column;gap:6px}
+.meter{position:relative;height:14px;background:var(--surface);border:1px solid var(--line);border-radius:2px;overflow:hidden}
+.meter i{position:absolute;inset:0 auto 0 0;background:var(--accent);transition:width .6s var(--ease)}
+.chain{font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 14px}
+.chain strong{color:var(--ink);font-family:var(--mono);font-weight:600}
+.last{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:4px;padding:10px 12px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-top:6px}
+.last.fresh{animation:land .6s var(--ease)}
+@keyframes land{from{background:color-mix(in srgb,var(--accent) 24%,var(--surface))}to{background:var(--surface)}}
+.last .name{font-weight:600}
+.last .sub{font-size:12px;color:var(--muted)}
+.plus{font-family:var(--display);font-weight:900;font-size:34px;line-height:1;color:var(--accent)}
+.verdict{font-family:var(--display);font-weight:800;font-size:30px;line-height:1.05;text-transform:uppercase;letter-spacing:.02em;margin:8px 0 0;text-wrap:balance}
+
+.draw{display:flex;flex-direction:column;gap:12px}
+.draw h2{font-family:var(--display);font-weight:900;font-size:clamp(34px,10cqw,52px);line-height:.95;text-transform:uppercase;margin:2px 0 0;text-wrap:balance}
+.search{width:100%;min-height:48px;padding:10px 12px;border:1.5px solid var(--ink);border-radius:4px;background:var(--surface)}
+.search::placeholder{color:var(--muted)}
+.pool{list-style:none;margin:0;padding:0;border-top:2px solid var(--ink)}
+.pool li{border-bottom:1px solid var(--line)}
+.pick{width:100%;display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:11px 4px;background:none;border:0;text-align:left;min-height:48px}
+.pick .name{font-weight:600;overflow-wrap:anywhere}
+.pick .yrs{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pick:hover .name,.pick[aria-expanded="true"] .name{color:var(--accent)}
+.lock{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:0 4px 12px;font-size:13px;color:var(--muted)}
+.btn{border:1.5px solid var(--ink);background:transparent;border-radius:4px;padding:10px 14px;font-weight:600;font-size:14px;min-height:44px;transition:transform .15s var(--ease)}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;border-style:dashed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.big2{font-size:17px;padding:14px 22px;min-height:54px;flex:1 1 220px;max-width:340px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+
+.log{width:100%;border-collapse:collapse;font-size:14px}
+.log th{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 4px;border-bottom:2px solid var(--ink)}
+.log td{padding:8px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+.log td.t{font-family:var(--display);font-weight:800;font-size:17px;white-space:nowrap}
+.log td.n,.log th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600}
+.log .sub{display:block;font-size:12px;color:var(--muted)}
+.scroll{overflow-x:auto}
+details{border-top:1px solid var(--line);padding-top:12px;font-size:14px}
+summary{font-weight:600;cursor:pointer}
+details p{max-width:62ch;margin:10px 0 0;color:var(--muted)}
+details p strong{color:var(--ink)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body class="pre">
+<main>
+  <a class="back" href="../">← All games</a>
+  <header><h1 class="mark" id="mark"></h1></header>
+  <section class="intro" id="intro">
+    <div class="eyebrow" id="i-eye"></div>
+    <div class="big" id="i-big" aria-hidden="true"></div>
+    <h2 class="pitch" id="i-pitch"></h2>
+    <ol class="steps" id="i-steps"></ol>
+    <p class="note" id="i-note"></p>
+    <div class="actions"><button class="btn primary big2" id="go" disabled>Loading players</button></div>
+    <p class="note num" id="best2"></p>
+  </section>
+  <section class="board" id="board" aria-live="polite"></section>
+  <section class="draw" id="stage"></section>
+  <details><summary>What counts</summary><div id="counts"></div></details>
+</main>
+<script>
+const CFG={"id": "air-yards", "title": ["Air", "Yards"], "league": "NFL", "teams": {"ARI": ["Arizona Cardinals", "Includes the St. Louis and Phoenix Cardinals"], "ATL": ["Atlanta Falcons"], "BAL": ["Baltimore Ravens"], "BUF": ["Buffalo Bills"], "CAR": ["Carolina Panthers"], "CHI": ["Chicago Bears"], "CIN": ["Cincinnati Bengals"], "CLE": ["Cleveland Browns"], "DAL": ["Dallas Cowboys"], "DEN": ["Denver Broncos"], "DET": ["Detroit Lions"], "GB": ["Green Bay Packers"], "HOU": ["Houston Texans"], "IND": ["Indianapolis Colts", "Includes the Baltimore Colts"], "JAX": ["Jacksonville Jaguars"], "KC": ["Kansas City Chiefs"], "LAC": ["Los Angeles Chargers", "Includes the San Diego Chargers"], "LAR": ["Los Angeles Rams", "Includes the St. Louis Rams"], "LV": ["Las Vegas Raiders", "Includes the Oakland and Los Angeles Raiders"], "MIA": ["Miami Dolphins"], "MIN": ["Minnesota Vikings"], "NE": ["New England Patriots"], "NO": ["New Orleans Saints"], "NYG": ["New York Giants"], "NYJ": ["New York Jets"], "PHI": ["Philadelphia Eagles"], "PIT": ["Pittsburgh Steelers"], "SEA": ["Seattle Seahawks"], "SF": ["San Francisco 49ers"], "TB": ["Tampa Bay Buccaneers"], "TEN": ["Tennessee Titans", "Includes the Houston Oilers"], "WAS": ["Washington Commanders", "Includes every Washington era"]}, "rounds": 10, "target": 470000, "scope": "career", "unit": "passing yards", "abbr": "YDS", "noun": "quarterback", "nouns": "quarterbacks", "eyebrow": "NFL quarterbacks · career passing yards", "step3": "His career passing yards go on your total, including the ones he threw for other teams.", "tip": "Remember where the greats finished up.", "counts": [["Passing yards are regular season only,", "through week 11 of the 2026 season."], ["Who is in the pool.", "Players whose careers started in 1970 or later. Anyone already playing in the 1960s is left out because the free data starts in 1970 and their totals would be wrong."], ["Teams follow the franchise.", "A team includes its earlier cities and names. Years next to a name are his first and last season with that team."], ["Known gaps.", "Before 1999, a quarterback traded mid-season is only listed under the teams he also played for in another year."]]};
+const TARGET=CFG.target, ROUNDS=CFG.rounds, TEAMS=CFG.teams, TEAMSCOPE=CFG.scope==="team", SHOWMAX=300;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt=n=>n.toLocaleString("en-US");
+const fold=s=>s.toLowerCase().normalize("NFD").replace(/[^a-z ]/g,"");
+const bigK=s=>s.length<=4?34:s.length<=5?29:s.length<=6?25:21;
+let P=[],ROSTER={},S=null;
+
+/* ---- pure helpers ---- */
+const entry=(i,t)=>P[i][3].find(r=>r[0]===t);
+const val=(i,t)=>TEAMSCOPE?entry(i,t)[3]:P[i][1];
+function lastName(n){const w=n.split(" ");let l=w[w.length-1];if(/^(jr\.?|sr\.?|ii|iii|iv|v)$/i.test(l)&&w.length>2)l=w[w.length-2];return fold(l)+" "+fold(n)}
+function years(i,t){const x=entry(i,t);return x[1]===x[2]?""+x[1]:x[1]+"–"+String(x[2]).slice(2)}
+/* Best possible pick for every round, no player used twice. Rounds x candidates assignment solved exactly (Hungarian method). Returns player index by round. */
+function perfect(order){const cand=[],seen=new Set();
+  for(const t of new Set(order))ROSTER[t].slice().sort((a,b)=>val(b,t)-val(a,t)).slice(0,order.length).forEach(i=>{if(!seen.has(i)){seen.add(i);cand.push(i)}});
+  const n=order.length,m=cand.length,BIG=1e9,cost=(r,c)=>{const e=entry(cand[c],order[r]);return e?-(TEAMSCOPE?e[3]:P[cand[c]][1]):BIG};
+  const u=new Array(n+1).fill(0),v=new Array(m+1).fill(0),p=new Array(m+1).fill(0),way=new Array(m+1).fill(0);
+  for(let i=1;i<=n;i++){p[0]=i;let j0=0;const minv=new Array(m+1).fill(Infinity),used=new Array(m+1).fill(false);
+    do{used[j0]=true;const i0=p[j0];let d=Infinity,j1=0;
+      for(let j=1;j<=m;j++)if(!used[j]){const cur=cost(i0-1,j-1)-u[i0]-v[j];if(cur<minv[j]){minv[j]=cur;way[j]=j0}if(minv[j]<d){d=minv[j];j1=j}}
+      for(let j=0;j<=m;j++)if(used[j]){u[p[j]]+=d;v[j]-=d}else minv[j]-=d;
+      j0=j1}while(p[j0]!==0);
+    do{const j1=way[j0];p[j0]=p[j1];j0=j1}while(j0)}
+  const out=new Array(n);for(let j=1;j<=m;j++)if(p[j])out[p[j]-1]=cand[j-1];return out}
+
+/* ---- state ---- */
+function fresh(){const all=Object.keys(TEAMS);return{order:Array.from({length:ROUNDS},()=>all[Math.floor(Math.random()*all.length)]),picks:[],ask:null,fresh:false}}
+const total=()=>S.picks.reduce((a,i,r)=>a+val(i,S.order[r]),0);
+const done=()=>S.picks.length>=ROUNDS;
+
+/* ---- render ---- */
+function verdict(t){return t>=TARGET*1.1?"Hall of Fame draft":t>=TARGET?"Target hit":t>=TARGET*.92?"So close":t>=TARGET*.65?"Came up short":"Back to the film room"}
+function drawBoard(){const t=total(),n=S.picks.length,left=ROUNDS-n,need=Math.max(0,TARGET-t);let h="";
+  h+='<div class="eyebrow">'+(done()?"Final total":n?"Total after "+n+" of "+ROUNDS:"Your total")+"</div>";
+  h+='<div class="big'+(t>=TARGET?" hit":"")+'" style="--k:'+bigK(fmt(t))+'">'+fmt(t)+"</div>";
+  h+='<div class="meter" role="img" aria-label="'+fmt(t)+" of "+fmt(TARGET)+" "+CFG.unit+'"><i style="width:'+Math.min(100,t/TARGET*100)+'%"></i></div>';
+  h+='<div class="chain"><span>Target <strong>'+fmt(TARGET)+"</strong></span>"+(need?"<span>Need <strong>"+fmt(need)+"</strong> more</span>"+(left?"<span>That is <strong>"+fmt(Math.ceil(need/left))+"</strong> per pick</span>":""):"<span>Target reached</span>")+"</div>";
+  if(n&&!done()){const i=S.picks[n-1],tm=S.order[n-1],v=val(i,tm);
+    const sub=TEAMSCOPE?fmt(v)+" with the "+TEAMS[tm][0].split(" ").pop()+", "+fmt(P[i][1])+" in his career":(P[i][2]||"Career "+CFG.unit);
+    h+='<div class="last'+(S.fresh?" fresh":"")+'"><span><div class="name">'+esc(P[i][0])+'</div><div class="sub">'+esc(sub)+'</div></span><span class="plus">+'+fmt(v)+"</span></div>"}
+  if(done()){const best=perfect(S.order),bt=best.reduce((a,i,r)=>a+val(i,S.order[r]),0);
+    h+='<p class="verdict">'+verdict(t)+"</p>";
+    h+='<p class="note">'+(t>=TARGET?"You cleared the target by "+fmt(t-TARGET)+".":"You finished "+fmt(TARGET-t)+" short.")+" A perfect draft with these "+ROUNDS+" draws was "+fmt(bt)+", so you got "+Math.round(t/bt*100)+"% of what was out there.</p>"}
+  $("board").innerHTML=h;S.fresh=false}
+function drawList(){const t=S.order[S.picks.length],q=fold($("q").value).trim(),used=new Set(S.picks);
+  const all=ROSTER[t].filter(i=>!used.has(i)&&(!q||fold(P[i][0]).includes(q))),rows=all.slice(0,SHOWMAX);
+  $("pool").innerHTML=rows.length?rows.map(i=>'<li><button class="pick" data-i="'+i+'" aria-expanded="'+(S.ask===i)+'"><span class="name">'+esc(P[i][0])+'</span><span class="yrs">'+years(i,t)+"</span></button>"+
+    (S.ask===i?'<div class="lock"><button class="btn primary" data-lock="'+i+'">Lock in '+esc(P[i][0])+"</button><span>No take-backs.</span></div>":"")+"</li>").join(""):'<li><p class="note" style="padding:14px 4px">No '+CFG.noun+" matches that search for this team.</p></li>";
+  $("count").textContent=fmt(all.length)+(q?" matching ":" ")+(all.length===1?CFG.noun:CFG.nouns)+", A to Z by last name"+(all.length>SHOWMAX?". Showing the first "+SHOWMAX+", so search to narrow it down":"")}
+function drawStage(){const st=$("stage");
+  if(done()){const best=perfect(S.order);
+    st.innerHTML='<div class="eyebrow">Your '+ROUNDS+' picks against the perfect draft</div><div class="scroll"><table class="log"><thead><tr><th>Team</th><th>Your pick</th><th class="n">'+CFG.abbr+'</th><th>Best</th><th class="n">'+CFG.abbr+"</th></tr></thead><tbody>"+
+      S.order.map((t,r)=>{const i=S.picks[r],b=best[r];return'<tr><td class="t">'+t+"</td><td>"+esc(P[i][0])+'</td><td class="n">'+fmt(val(i,t))+"</td><td>"+(b===i?"Same":esc(P[b][0]))+'</td><td class="n">'+fmt(val(b,t))+"</td></tr>"}).join("")+
+      '</tbody></table></div><div class="actions"><button class="btn primary" data-a="again">Play again</button><button class="btn" data-a="copy">Copy result</button></div>';return}
+  const n=S.picks.length,t=S.order[n],T=TEAMS[t];
+  st.innerHTML='<div><div class="eyebrow">Round '+(n+1)+" of "+ROUNDS+" · pick one "+CFG.noun+"</div><h2>"+esc(T[0])+"</h2>"+(T[1]?'<p class="note">'+esc(T[1])+".</p>":"")+"</div>"+
+    '<input class="search" id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Search by name" aria-label="Search by name">'+
+    '<p class="note" id="count"></p><ul class="pool" id="pool"></ul>'+
+    (n?'<details id="mine"><summary>Your picks so far ('+n+')</summary><table class="log"><tbody>'+S.picks.map((i,r)=>'<tr><td class="t">'+S.order[r]+"</td><td>"+esc(P[i][0])+'</td><td class="n">'+fmt(val(i,S.order[r]))+"</td></tr>").join("")+"</tbody></table></details>":"");
+  $("q").addEventListener("input",()=>{S.ask=null;drawList()});
+  drawList()}
+function render(){drawBoard();drawStage();showBest()}
+const KEY="best_"+CFG.id;
+function showBest(){let s="";try{const b=JSON.parse(localStorage.getItem(KEY)||"null");if(b)s="Your best on this device: "+fmt(b)}catch(e){}$("best2").textContent=s}
+
+/* ---- static copy from the config ---- */
+document.title=CFG.title.join(" ");
+$("mark").innerHTML=esc(CFG.title[0])+" <b>"+esc(CFG.title[1])+"</b>";
+$("i-eye").textContent=CFG.eyebrow;
+$("i-big").textContent=fmt(TARGET);$("i-big").style.setProperty("--k",bigK(fmt(TARGET)));
+$("i-pitch").textContent=ROUNDS+" teams. "+ROUNDS+" "+CFG.nouns+". "+fmt(TARGET)+" "+CFG.unit+".";
+$("i-steps").innerHTML=["You get a random "+CFG.league+" team.","Pick any "+CFG.noun+" who ever played for them. You see names, not numbers.",CFG.step3].map((s,i)=>"<li><b>"+(i+1)+"</b><span>"+esc(s)+"</span></li>").join("");
+$("i-note").textContent="Every round is a fresh random draw, so the same team can come up twice. No rerolls, and each "+CFG.noun+" can only be used once. You need to average "+fmt(Math.ceil(TARGET/ROUNDS))+" a pick."+(CFG.tip?" "+CFG.tip:"");
+$("counts").innerHTML=CFG.counts.map(p=>"<p><strong>"+esc(p[0])+"</strong> "+esc(p[1])+"</p>").join("");
+
+/* ---- events ---- */
+$("stage").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.lock!==undefined){S.picks.push(+b.dataset.lock);S.ask=null;S.fresh=true;
+    if(done()){try{const o=JSON.parse(localStorage.getItem(KEY)||"null");if(!o||total()>o)localStorage.setItem(KEY,JSON.stringify(total()))}catch(e2){}}
+    render();scrollTo({top:0,behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"})}
+  else if(b.dataset.i!==undefined){const i=+b.dataset.i;S.ask=S.ask===i?null:i;drawList()}
+  else if(b.dataset.a==="again"){S=fresh();render();scrollTo({top:0})}
+  else if(b.dataset.a==="copy"){const t=total();
+    const txt=CFG.title.join(" ")+": "+fmt(t)+" of "+fmt(TARGET)+" ("+verdict(t)+")\n"+S.order.map((tm,r)=>tm+" "+P[S.picks[r]][0]+" "+fmt(val(S.picks[r],tm))).join("\n");
+    navigator.clipboard.writeText(txt).then(()=>{b.textContent="Copied"},()=>{b.textContent="Copy blocked"})}});
+$("go").addEventListener("click",()=>{document.body.classList.remove("pre");S=fresh();render();scrollTo({top:0})});
+
+function start(saved){showBest();
+  fetch("data.json").then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{P=d;
+    for(const t in TEAMS)ROSTER[t]=[];
+    P.forEach((p,i)=>p[3].forEach(r=>{if(ROSTER[r[0]])ROSTER[r[0]].push(i)}));
+    const key=P.map(p=>lastName(p[0]));for(const t in ROSTER)ROSTER[t].sort((a,b)=>key[a]<key[b]?-1:key[a]>key[b]?1:0);
+    $("go").disabled=false;$("go").textContent="Start the chase";
+    if(saved&&saved.order&&saved.picks){S=saved;document.body.classList.remove("pre");render()}
+  }).catch(()=>{$("go").textContent="Could not load players";$("best2").textContent="The player list did not load. Check your connection and reload the page."})}
+window.claude?.hot?.snapshot?.(()=>document.body.classList.contains("pre")||!S?{}:S);
+window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
+</script>
+</body>
+</html>

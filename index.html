@@ -12,7 +12,6 @@
 /* Layout idea: the front of a scorebook. The site name is the one loud element; each game is a ruled row carrying its own accent color. */
 :root{
   --bg:#e9edf1; --surface:#ffffff; --ink:#0d1a2c; --muted:#566376; --line:#c9d1da;
-  --hoops:#d9480f; --turf:#17703f;
   --display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
   --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
@@ -20,13 +19,11 @@
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --bg:#0a121d; --surface:#131f30; --ink:#edf1f6; --muted:#96a3b5; --line:#293950;
-    --hoops:#ff6b2c; --turf:#4bc884; color-scheme:dark;
+    --bg:#0a121d; --surface:#131f30; --ink:#edf1f6; --muted:#96a3b5; --line:#293950; color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#0a121d; --surface:#131f30; --ink:#edf1f6; --muted:#96a3b5; --line:#293950;
-  --hoops:#ff6b2c; --turf:#4bc884; color-scheme:dark;
+  --bg:#0a121d; --surface:#131f30; --ink:#edf1f6; --muted:#96a3b5; --line:#293950; color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
@@ -38,14 +35,17 @@ a:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 .top{display:flex;flex-direction:column;gap:8px;border-bottom:2px solid var(--ink);padding-bottom:16px}
 h1{font-family:var(--display);font-weight:900;font-size:clamp(58px,19cqw,120px);line-height:.84;text-transform:uppercase;letter-spacing:-.005em;margin:4px 0 0}
 .pitch{font-family:var(--display);font-weight:800;font-size:clamp(24px,7cqw,34px);line-height:1.02;text-transform:uppercase;margin:6px 0 0;text-wrap:balance}
-.games{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
-.game{--c:var(--ink);display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--c);border-radius:4px;padding:14px 14px 14px 16px;color:inherit;text-decoration:none;transition:transform .2s var(--ease),border-color .2s var(--ease)}
+.sport{display:flex;flex-direction:column;gap:10px}
+.sec{font-family:var(--display);font-weight:900;font-size:30px;line-height:1;margin:0;display:flex;align-items:baseline;gap:10px;text-transform:uppercase}
+.sec span{font-family:var(--body);font-size:12px;font-weight:600;letter-spacing:.09em;color:var(--muted)}
+.games{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.game{--c:var(--cl);display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--c);border-radius:4px;padding:12px 14px 12px 16px;color:inherit;text-decoration:none;transition:transform .2s var(--ease),border-color .2s var(--ease)}
 .game:hover{transform:translateX(3px);border-color:var(--c)}
-.game.hoops{--c:var(--hoops)} .game.turf{--c:var(--turf)}
-.game .sport{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--c)}
-.game h2{font-family:var(--display);font-weight:900;font-size:clamp(34px,10cqw,46px);line-height:.95;text-transform:uppercase;margin:2px 0 6px}
+.game h3{font-family:var(--display);font-weight:900;font-size:clamp(28px,8.5cqw,38px);line-height:.95;text-transform:uppercase;margin:0 0 5px}
 .game p{margin:0;font-size:14px;color:var(--muted);max-width:44ch}
-.play{font-family:var(--display);font-weight:800;font-size:20px;text-transform:uppercase;letter-spacing:.04em;color:var(--c);white-space:nowrap}
+.play{font-family:var(--display);font-weight:800;font-size:18px;text-transform:uppercase;letter-spacing:.04em;color:var(--c);white-space:nowrap}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .game{--c:var(--cd)}}
+:root[data-theme="dark"] .game{--c:var(--cd)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -56,15 +56,25 @@ h1{font-family:var(--display);font-weight:900;font-size:clamp(58px,19cqw,120px);
     <h1>Scorer's Table</h1>
     <p class="pitch">Random team. Pick a player. Beat the number.</p>
   </div>
+  <section class="sport"><h2 class="sec">NBA <span>3 games</span></h2>
   <ul class="games">
-    <li><a class="game hoops" href="82-0/">
-      <span><span class="sport">NBA</span><h2>82-0 VORP</h2><p>Draft five players from random teams and decades, then play all 82 games. Can your lineup go unbeaten?</p></span>
-      <span class="play" aria-hidden="true">Play →</span></a></li>
-    <li><a class="game turf" href="touchdown-chase/">
-      <span><span class="sport">NFL</span><h2>Touchdown Chase</h2><p>20 random teams, 20 running backs. You see names, not numbers. Reach 1,800 career touchdowns.</p></span>
-      <span class="play" aria-hidden="true">Play →</span></a></li>
-  </ul>
-  <p class="note">More games are on the way for MLB, college football and college basketball.</p>
+    <li><a class="game" style="--cl:#d9480f;--cd:#ff6b2c" href="82-0/"><span><h3>82-0 VORP</h3><p>Draft five players from random teams and decades, then play all 82 games. Can your lineup go unbeaten?</p></span><span class="play" aria-hidden="true">Play →</span></a></li>
+    <li><a class="game" style="--cl:#d9480f;--cd:#ff6b2c" href="bucket-list/"><span><h3>Bucket List</h3><p>12 random teams, 12 players. Pile up career points without seeing the numbers.</p></span><span class="play" aria-hidden="true">Play →</span></a></li>
+    <li><a class="game" style="--cl:#7a3fb0;--cd:#b98af0" href="dime-store/"><span><h3>Dime Store</h3><p>12 random teams, 12 players. Career assists this time, so think point guards.</p></span><span class="play" aria-hidden="true">Play →</span></a></li>
+  </ul></section>
+  <section class="sport"><h2 class="sec">NFL <span>3 games</span></h2>
+  <ul class="games">
+    <li><a class="game" style="--cl:#17703f;--cd:#4bc884" href="touchdown-chase/"><span><h3>Touchdown Chase</h3><p>20 random teams, 20 running backs. You see names, not numbers. Reach 1,800 career touchdowns.</p></span><span class="play" aria-hidden="true">Play →</span></a></li>
+    <li><a class="game" style="--cl:#8a5a00;--cd:#e3a83a" href="homegrown/"><span><h3>Home Grown</h3><p>Touchdown Chase with a twist. Only the touchdowns a back scored for that team count.</p></span><span class="play" aria-hidden="true">Play →</span></a></li>
+    <li><a class="game" style="--cl:#1d5fa8;--cd:#62a8f5" href="air-yards/"><span><h3>Air Yards</h3><p>10 random teams, 10 quarterbacks. Stack up career passing yards without seeing the numbers.</p></span><span class="play" aria-hidden="true">Play →</span></a></li>
+  </ul></section>
+  <section class="sport"><h2 class="sec">MLB <span>3 games</span></h2>
+  <ul class="games">
+    <li><a class="game" style="--cl:#b3261e;--cd:#ff7466" href="home-run-chase/"><span><h3>Home Run Chase</h3><p>15 random teams, 15 hitters. Stack career home runs without seeing the numbers.</p></span><span class="play" aria-hidden="true">Play →</span></a></li>
+    <li><a class="game" style="--cl:#0f6b78;--cd:#4fc3d1" href="k-count/"><span><h3>K Count</h3><p>15 random teams, 15 pitchers. Career strikeouts, names only.</p></span><span class="play" aria-hidden="true">Play →</span></a></li>
+    <li><a class="game" style="--cl:#5a6b12;--cd:#b5cc4a" href="hit-parade/"><span><h3>Hit Parade</h3><p>15 random teams, 15 hitters. Only the hits a player got for that team count.</p></span><span class="play" aria-hidden="true">Play →</span></a></li>
+  </ul></section>
+  <p class="note">College football and college basketball games are on the way.</p>
 </main>
 </body>
 </html>

@@ -8,8 +8,22 @@ No login, no install. It runs in your browser, phone or desktop.
 
 ## The games
 
-- **82-0 VORP** (NBA) - https://dlgambill.github.io/82-0-vorp/82-0/ - Can you build a team that never loses?
-- **Touchdown Chase** (NFL) - https://dlgambill.github.io/82-0-vorp/touchdown-chase/ - You get 20 random NFL teams and pick one running back for each. You only see names. Each back's career touchdowns go on your total, and you need 1,800 to win.
+NBA
+- **82-0 VORP** - Draft five players from random teams and decades. Can your lineup go 82-0?
+- **Bucket List** - 12 random teams, 12 players. Pile up 310,000 career points.
+- **Dime Store** - Same idea with career assists. Think point guards.
+
+NFL
+- **Touchdown Chase** - 20 random teams, 20 running backs. Reach 1,800 career touchdowns.
+- **Home Grown** - Only the touchdowns a back scored for that team count.
+- **Air Yards** - 10 quarterbacks, 470,000 career passing yards.
+
+MLB
+- **Home Run Chase** - 15 hitters, 7,600 career home runs.
+- **K Count** - 15 pitchers, 47,000 career strikeouts.
+- **Hit Parade** - Only the hits a player got for that team count.
+
+In most of these you only see names. The numbers show up after you lock in your pick.
 
 ## How 82-0 VORP works
 
@@ -37,8 +51,8 @@ To have a real shot at 82-0 you need a combined VORP of about 38 or more. At 41 
 
 ## Where the numbers come from
 
-Player stats are from Basketball-Reference, through the 2025-26 season. This is a hobby project and is not affiliated with the NBA, Basketball-Reference, or the original 82-0 game.
+Stats come from Basketball-Reference (NBA), nflverse and Pro-Football-Reference (NFL), and the Lahman Baseball Database (MLB). This is a hobby project and is not affiliated with any league, any of those sources, or the original 82-0 game.
 
 ## For the curious
 
-Each game is one page in its own folder. The `src` folder has the scripts that build the player data.
+Each game is one page in its own folder. Most of them share one engine, and the `src` folder has that plus the scripts that build the player data.
