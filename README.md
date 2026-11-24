@@ -19,6 +19,7 @@ NFL
 - **Air Yards** - 10 quarterbacks, 470,000 career passing yards.
 
 MLB
+- **162-0 WAR** - The baseball twin of 82-0. Draft nine hitters and five starters, then play 162 games.
 - **Home Run Chase** - 15 hitters, 7,600 career home runs.
 - **K Count** - 15 pitchers, 47,000 career strikeouts.
 - **Hit Parade** - Only the hits a player got for that team count.

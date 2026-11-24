@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>162-0 WAR</title>
+<script>/* Phone browser in "Desktop site" mode ignores the viewport tag and lays out ~980px wide. Zoom back to phone size. */
+(function(){var s=screen.width,w=window.innerWidth;if(s<600&&w>s*1.4)document.documentElement.style.zoom=w/s})();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a scorer's sheet. One loud element (the projected record), everything else ruled rows. */
+:root{
+  --bg:#e9edf1; --surface:#ffffff; --ink:#0d1a2c; --muted:#566376; --line:#c9d1da;
+  --accent:#b3261e; --on-accent:#ffffff; --win:#12754a; --loss:#8a5a00;
+  --display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0a121d; --surface:#131f30; --ink:#edf1f6; --muted:#96a3b5; --line:#293950;
+    --accent:#ff7466; --on-accent:#0a121d; --win:#45c486; --loss:#ff7466; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0a121d; --surface:#131f30; --ink:#edf1f6; --muted:#96a3b5; --line:#293950;
+  --accent:#ff7466; --on-accent:#0a121d; --win:#45c486; --loss:#ff7466; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+main{container-type:inline-size;max-width:680px;margin:0 auto;padding:16px 16px 48px;display:flex;flex-direction:column;gap:20px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:10px}
+.mark{font-family:var(--display);font-weight:900;font-size:26px;letter-spacing:.02em;line-height:1;margin:0}
+.mark b{color:var(--accent);font-weight:900}
+.toggle{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--muted)}
+.toggle input{width:18px;height:18px;accent-color:var(--accent);margin:0}
+
+.board{display:flex;flex-direction:column;gap:4px}
+.record{font-family:var(--display);font-weight:900;line-height:.82;font-size:clamp(84px,28cqw,190px);letter-spacing:-.01em;margin:6px 0 2px;display:flex;align-items:baseline;gap:.06em}
+.record .dash{color:var(--accent)}
+.record.perfect{color:var(--accent)}
+.record.perfect .dash{color:var(--ink)}
+.chain{font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 14px}
+.chain strong{color:var(--ink);font-family:var(--mono);font-weight:600}
+.verdict{font-family:var(--display);font-weight:800;font-size:30px;line-height:1.05;text-transform:uppercase;letter-spacing:.02em;margin:8px 0 0;text-wrap:balance}
+
+.lineup{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:4px}
+.lineup li{display:grid;grid-template-columns:36px 1fr auto;align-items:center;gap:10px;padding:7px 12px;border-bottom:1px solid var(--line);min-height:40px}
+.back{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;align-self:flex-start}
+.lineup li:last-child{border-bottom:0}
+.lineup li:not(.filled){min-height:34px;padding-top:5px;padding-bottom:5px}
+.pos{font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:.03em}
+.lineup .who{min-width:0}
+.lineup .name{font-weight:600;overflow-wrap:anywhere}
+.lineup .sub{font-size:12px;color:var(--muted)}
+.lineup .open{color:var(--muted);font-size:14px}
+.lineup li.filled .pos{color:var(--accent)}
+.lineup li.fresh{animation:land .5s var(--ease)}
+@keyframes land{from{background:color-mix(in srgb,var(--accent) 22%,var(--surface))}to{background:var(--surface)}}
+.v{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums;font-size:15px}
+
+.draw{display:flex;flex-direction:column;gap:12px}
+.draw h2{font-family:var(--display);font-weight:900;font-size:clamp(34px,10cqw,52px);line-height:.95;text-transform:uppercase;margin:2px 0 0;text-wrap:balance}
+.draw h2 span{color:var(--accent)}
+.draw.spinning h2{opacity:.55}
+.rerolls{display:flex;flex-wrap:wrap;gap:8px}
+.btn{border:1.5px solid var(--ink);background:transparent;border-radius:4px;padding:10px 14px;font-weight:600;font-size:14px;min-height:44px;transition:transform .15s var(--ease),background .15s var(--ease)}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.38;cursor:not-allowed;border-style:dashed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+
+.pool{list-style:none;margin:0;padding:0;border-top:2px solid var(--ink)}
+.pool li{border-bottom:1px solid var(--line)}
+.pick{width:100%;display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:11px 4px;background:none;border:0;text-align:left;min-height:52px}
+.pick .name{font-weight:600;overflow-wrap:anywhere}
+.pick .sub{font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:11px;font-weight:600;border:1px solid var(--line);border-radius:3px;padding:1px 5px;color:var(--ink)}
+.chip.sec{border-style:dashed;color:var(--muted)}
+.chip.off{opacity:.4;text-decoration:line-through}
+.pick[disabled]{cursor:not-allowed}
+.pick[disabled] .name,.pick[disabled] .v{color:var(--muted);font-weight:500}
+.pick:not([disabled]):hover .name{color:var(--accent)}
+.where{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 4px 12px;font-size:13px;color:var(--muted)}
+.note{font-size:13px;color:var(--muted);margin:0}
+
+.strip{display:grid;grid-template-columns:repeat(54,1fr);gap:1.5px}
+.strip i{aspect-ratio:1/1.5;background:var(--line);border-radius:1px}
+.strip i.w{background:var(--win)}
+.strip i.l{background:transparent;box-shadow:inset 0 0 0 1.5px var(--loss)}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:8px;height:12px;border-radius:1px;margin-right:5px;vertical-align:-1px}
+.legend .w{background:var(--win)} .legend .l{box-shadow:inset 0 0 0 1.5px var(--loss)}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.losses{font-size:13px;color:var(--muted);margin:0}
+
+.intro{display:none;flex-direction:column;gap:14px}
+body.pre .intro{display:flex}
+body.pre #board,body.pre #lineup,body.pre #stage{display:none}
+.pitch{font-family:var(--display);font-weight:800;font-size:clamp(28px,8.5cqw,44px);line-height:1;text-transform:uppercase;letter-spacing:.01em;margin:0;text-wrap:balance}
+.steps{list-style:none;margin:4px 0 0;padding:0;border-top:2px solid var(--ink)}
+.steps li{display:grid;grid-template-columns:34px 1fr;align-items:baseline;gap:8px;padding:11px 0;border-bottom:1px solid var(--line)}
+.steps b{font-family:var(--display);font-weight:900;font-size:26px;line-height:1;color:var(--accent)}
+.btn.big{font-size:17px;padding:14px 22px;min-height:54px;flex:1 1 220px;max-width:340px}
+details{border-top:1px solid var(--line);padding-top:12px;font-size:14px}
+summary{font-weight:600;cursor:pointer}
+details p{max-width:62ch;margin:10px 0 0;color:var(--muted)}
+details p strong{color:var(--ink)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body class="pre">
+<main>
+  <a class="back" href="../">← All games</a>
+  <header>
+    <h1 class="mark">162<b>–</b>0 <span style="font-weight:600">WAR</span></h1>
+    <label class="toggle" for="blind"><input type="checkbox" id="blind"> Hide WAR</label>
+  </header>
+  <section class="intro" id="intro">
+    <div class="eyebrow">MLB roster builder · wins decided by WAR</div>
+    <div class="record" aria-hidden="true">162<span class="dash">–</span>0</div>
+    <h2 class="pitch">Draft nine hitters and five starters. Play 162. Lose none.</h2>
+    <ol class="steps">
+      <li><b>1</b><span>You get a random team and decade, like the 1920s Yankees.</span></li>
+      <li><b>2</b><span>Pick one player from it for an open spot: eight fielders, a DH and five starting pitchers.</span></li>
+      <li><b>3</b><span>After 14 picks, the full season plays out game by game.</span></li>
+    </ol>
+    <p class="note">You get one team reroll and one decade reroll per game. The number next to each player is his WAR in his best season there, and a higher total means more wins. Any hitter can be your DH.</p>
+    <div class="actions"><button class="btn primary big" id="go" disabled>Loading players</button></div>
+    <p class="note num" id="best2"></p>
+  </section>
+  <section class="board" id="board" aria-live="polite"></section>
+  <section class="draw" id="stage"></section>
+  <ol class="lineup" id="lineup" aria-label="Your roster"></ol>
+  <details>
+    <summary>How wins are decided</summary>
+    <p><strong>Each player counts for his best WAR season</strong> with that franchise in that decade, 1901 through 2025, scaled to a 162-game schedule. Hitters use batting and fielding WAR. Pitchers use pitching WAR and need 15 starts in the season to qualify.</p>
+    <p><strong>Team WAR becomes run differential.</strong> A team of replacement players wins about 48 games. Every point of WAR adds a win, and a win is worth about 10 runs over a season. The other 12 spots on your roster are replacement level.</p>
+    <p><strong>Then 162 games get played.</strong> Each game adds the opponent's strength, home field and game-to-game swing. Single games here swing less than in real baseball. With real swings, even the best lineup ever drafted would still lose a dozen.</p>
+    <p><strong>Positions.</strong> A player can go anywhere he played at least 20 games in a season for that team in that decade. Before outfield spots were tracked separately, outfielders can play all three.</p>
+    <p id="best" class="num"></p>
+  </details>
+</main>
+<script>
+const SLOTS=["C","1B","2B","3B","SS","LF","CF","RF","DH","SP1","SP2","SP3","SP4","SP5"];
+const OPP=["ARI","ATL","BAL","BOS","CHC","CHW","CIN","CLE","COL","DET","HOU","KC","LAA","LAD","MIA","MIL","MIN","NYM","NYY","ATH","PHI","PIT","SD","SEA","SF","STL","TB","TEX","TOR","WSH"];
+const BASE=47.6, SD=2.7, OPP_SD=0.45, HOME=0.15, GAMES=162, ROUNDS=SLOTS.length;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+const lab=s=>s.startsWith("SP")?"SP":s;
+let COMBOS=[],S=null;
+
+/* ---- pure model ---- */
+function phi(x){const t=1/(1+.2316419*Math.abs(x)),d=.3989423*Math.exp(-x*x/2);
+  const p=d*t*(.3193815+t*(-.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return x>0?1-p:p}
+const runsPerGame=war=>(BASE+war-81)*10/GAMES;
+const winOdds=war=>phi(runsPerGame(war)/Math.hypot(SD,OPP_SD));
+function gauss(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function simSeason(war){const rd=runsPerGame(war),g=[];
+  for(let i=0;i<GAMES;i++){const home=i%2===0,opp=OPP[Math.floor(Math.random()*OPP.length)];
+    let m=Math.round(rd-gauss()*OPP_SD+(home?HOME:-HOME)+gauss()*SD);
+    if(m===0)m=Math.random()<phi(rd/4)?1:-1;
+    g.push({m,opp,home})}
+  return g}
+
+/* ---- state ---- */
+function fresh(){const s={round:1,slots:{},ci:-1,teamRe:false,decRe:false,blind:S?S.blind:$("blind").checked,used:[],ask:null,fresh:null,season:null,shown:0};SLOTS.forEach(k=>s.slots[k]=null);return s}
+const openSlots=()=>SLOTS.filter(p=>!S.slots[p]);
+const drafted=()=>SLOTS.map(p=>S.slots[p]).filter(Boolean);
+const teamWar=()=>drafted().reduce((a,p)=>a+p.v,0);
+const taken=id=>drafted().some(p=>p.id===id);
+const isP=pl=>pl[2]==="SP";
+function eligible(pl){if(taken(pl[0]))return[];const o=openSlots();
+  if(isP(pl))return o.filter(s=>s.startsWith("SP")).slice(0,1);
+  const pos=pl[2].split("/");return o.filter(s=>!s.startsWith("SP")&&(s==="DH"||pos.includes(s)))}
+function playable(i){return COMBOS[i].p.some(pl=>eligible(pl).length)}
+function candidates(filter){const out=[];COMBOS.forEach((c,i)=>{if(i!==S.ci&&!S.used.includes(i)&&playable(i)&&(!filter||filter(c)))out.push(i)});return out}
+const pickOne=a=>a[Math.floor(Math.random()*a.length)];
+
+function spin(filter,animate){const pool=candidates(filter);if(!pool.length)return false;
+  const target=pickOne(pool);S.ask=null;
+  if(!animate||reduce){S.ci=target;render();return true}
+  let n=0;$("stage").classList.add("spinning");
+  const t=setInterval(()=>{S.ci=pickOne(pool);drawHead();if(++n>9){clearInterval(t);S.ci=target;$("stage").classList.remove("spinning");render()}},70);
+  return true}
+function place(pl,slot){S.slots[slot]={id:pl[0],n:pl[1],v:pl[3],s:pl[4],t:COMBOS[S.ci].n};S.fresh=slot;S.used.push(S.ci);S.ask=null;
+  if(S.round>=ROUNDS){S.round=ROUNDS+1;S.ci=-1;render()}else{S.round++;spin(null,true);render()}
+  scrollTo({top:0,behavior:reduce?"auto":"smooth"})}
+function play(){S.season=simSeason(teamWar());S.shown=reduce?GAMES:0;render();scrollTo({top:0});
+  if(reduce)return finish();
+  const t=setInterval(()=>{S.shown=Math.min(GAMES,S.shown+2);drawBoard();drawStrip();if(S.shown>=GAMES){clearInterval(t);finish()}},30)}
+function finish(){const w=S.season.filter(g=>g.m>0).length;
+  try{const b=JSON.parse(localStorage.getItem("best_162-0")||"null");
+    if(!b||w>b.w)localStorage.setItem("best_162-0",JSON.stringify({w,v:+teamWar().toFixed(1)}))}catch(e){}
+  render()}
+
+/* ---- render ---- */
+const fmt=v=>(v>=0?"":"−")+Math.abs(v).toFixed(1);
+function verdict(w){return w===GAMES?"Perfect season":w>=150?"Nearly untouchable":w>=117?"Best record of all time":w>=105?"World Series favorite":w>=92?"Playoff team":w>=81?"Winning record":w>=63?"Long summer":"Historic tank job"}
+function drawBoard(){const tv=teamWar(),hide=S.blind&&!S.season;let w,l,label,extra="";
+  if(S.season){const g=S.season.slice(0,S.shown);w=g.filter(x=>x.m>0).length;l=g.length-w;label=S.shown<GAMES?"Game "+S.shown+" of "+GAMES:"Final record"}
+  else{w=Math.round(GAMES*winOdds(tv));l=GAMES-w;label=drafted().length===ROUNDS?"Projected record":"Projected with "+drafted().length+" of "+ROUNDS+" drafted"}
+  const done=S.season&&S.shown>=GAMES;
+  if(done)extra='<p class="verdict">'+verdict(w)+"</p>"+(w>=117&&w<GAMES?'<p class="note">The real record is 116 wins, by the 1906 Cubs and 2001 Mariners.</p>':"");
+  $("board").innerHTML='<div class="eyebrow">'+label+'</div><div class="record'+(done&&w===GAMES?" perfect":"")+'" aria-label="'+(hide?"hidden":w+" wins, "+l+" losses")+'">'+(hide?'??<span class="dash">–</span>??':w+'<span class="dash">–</span>'+l)+"</div>"+
+    (hide?'<div class="chain">WAR is hidden until the season is played.</div>':
+    '<div class="chain"><span>Team WAR <strong>'+fmt(tv)+'</strong></span><span>Run margin per game <strong>'+(runsPerGame(tv)>0?"+":"")+fmt(runsPerGame(tv))+'</strong></span><span>Win odds per game <strong>'+Math.round(winOdds(tv)*100)+"%</strong></span></div>")+extra}
+function drawLineup(){const hide=S.blind&&!S.season;
+  $("lineup").innerHTML=SLOTS.map(p=>{const x=S.slots[p];return x?
+    '<li class="filled'+(S.fresh===p?" fresh":"")+'"><span class="pos">'+lab(p)+'</span><span class="who"><div class="name">'+esc(x.n)+'</div><div class="sub">'+esc(x.t)+", "+x.s+'</div></span><span class="v">'+(hide?"?":fmt(x.v))+"</span></li>":
+    '<li><span class="pos">'+lab(p)+'</span><span class="open">Open</span><span></span></li>'}).join("");S.fresh=null}
+function drawHead(){const c=COMBOS[S.ci],h=document.querySelector("#stage h2");if(c&&h)h.innerHTML=esc(c.n)+" <span>"+c.d+"s</span>"}
+function drawStrip(){const el=$("strip");if(!el)return;
+  el.innerHTML=S.season.map((g,i)=>i<S.shown?'<i class="'+(g.m>0?"w":"l")+'" title="Game '+(i+1)+(g.home?" vs ":" at ")+g.opp+": "+(g.m>0?"W by ":"L by ")+Math.abs(g.m)+'"></i>':"<i></i>").join("")}
+function drawStage(){const st=$("stage");
+  if(S.season){const done=S.shown>=GAMES,L=S.season.map((g,i)=>({g,i})).filter(x=>x.g.m<0);let losses="";
+    if(done&&L.length&&L.length<=6)losses='<p class="losses">Losses: '+L.map(x=>"game "+(x.i+1)+(x.g.home?" vs ":" at ")+x.g.opp+" by "+(-x.g.m)).join(", ")+".</p>";
+    st.innerHTML='<div class="eyebrow">The season, game by game</div><div><div class="strip" id="strip"></div><div class="legend"><span><i class="w"></i>Win</span><span><i class="l"></i>Loss</span></div></div>'+losses+
+      (done?'<div class="actions"><button class="btn primary" data-a="again">Draft a new team</button><button class="btn" data-a="replay">Replay this season</button><button class="btn" data-a="copy">Copy result</button></div>':"");
+    drawStrip();return}
+  if(S.round>ROUNDS){st.innerHTML='<div class="eyebrow">Draft complete</div><h2>Fourteen picked. <span>162 to play.</span></h2><div class="actions"><button class="btn primary" data-a="play">Play the season</button><button class="btn" data-a="again">Start over</button></div>';return}
+  const c=COMBOS[S.ci],hide=S.blind,open=openSlots(),spOpen=open.some(s=>s.startsWith("SP"));
+  const shown=c.p.map((pl,idx)=>({pl,idx})).filter(x=>eligible(x.pl).length),hidden=c.p.length-shown.length;
+  const rows=shown.sort((a,b)=>hide?a.pl[1].localeCompare(b.pl[1]):b.pl[3]-a.pl[3]).map(({pl,idx})=>{const el=eligible(pl);
+    const tags=isP(pl)?["SP"]:pl[2].split("/").filter(p=>p!=="DH").concat(["DH"]);
+    const chips=tags.map(p=>{const ok=p==="SP"?spOpen:open.includes(p),own=isP(pl)||pl[2].split("/").includes(p);return'<span class="chip'+(ok?"":" off")+(own?"":" sec")+'">'+p+"</span>"}).join("");
+    return'<li><button class="pick" data-p="'+idx+'"><span><div class="name">'+esc(pl[1])+'</div><div class="sub">'+chips+"<span>"+(hide?"":"Best: "+pl[4])+'</span></div></span><span class="v">'+(hide?"":fmt(pl[3]))+"</span></button>"+
+      (S.ask===idx?'<div class="where">Play him at '+el.map(p=>'<button class="btn" data-p="'+idx+'" data-pos="'+p+'">'+lab(p)+"</button>").join("")+"</div>":"")+"</li>"}).join("");
+  const canT=!S.teamRe&&candidates(x=>x.d===c.d&&x.f!==c.f).length,canD=!S.decRe&&candidates(x=>x.f===c.f&&x.d!==c.d).length;
+  st.innerHTML='<div><div class="eyebrow">Round '+S.round+" of "+ROUNDS+' · pick one player</div><h2></h2></div>'+
+    '<div class="rerolls"><button class="btn" data-a="team"'+(canT?"":" disabled")+">"+(S.teamRe?"Team reroll used":"Reroll team")+'</button><button class="btn" data-a="dec"'+(canD?"":" disabled")+">"+(S.decRe?"Decade reroll used":"Reroll decade")+"</button></div>"+
+    '<ul class="pool">'+rows+"</ul>"+'<p class="note">'+(hide?"WAR hidden. Listed A to Z.":"Number is WAR in his best season here.")+" Any hitter can DH."+(hidden?" "+hidden+" player"+(hidden>1?"s":"")+" hidden with no open spot.":"")+"</p>";
+  drawHead()}
+function showBest(){let s="";try{const b=JSON.parse(localStorage.getItem("best_162-0")||"null");if(b)s="Your best on this device: "+b.w+"-"+(GAMES-b.w)+" (team WAR "+b.v+")"}catch(e){}$("best").textContent=s;$("best2").textContent=s}
+function render(){drawBoard();drawStage();drawLineup();$("blind").checked=S.blind;$("blind").disabled=!!(drafted().length>0&&!S.season);showBest()}
+
+/* ---- events ---- */
+$("stage").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.disabled)return;const a=b.dataset.a;
+  if(a==="team"){const c=COMBOS[S.ci];if(spin(x=>x.d===c.d&&x.f!==c.f,true))S.teamRe=true}
+  else if(a==="dec"){const c=COMBOS[S.ci];if(spin(x=>x.f===c.f&&x.d!==c.d,true))S.decRe=true}
+  else if(a==="play"||a==="replay")play();
+  else if(a==="again"){S=fresh();spin(null,false);scrollTo({top:0})}
+  else if(a==="copy"){const w=S.season.filter(g=>g.m>0).length;
+    const t="162-0 WAR: "+w+"-"+(GAMES-w)+" ("+verdict(w)+")\n"+SLOTS.map(p=>lab(p)+" "+S.slots[p].n+" ("+S.slots[p].t+" "+S.slots[p].s+") "+S.slots[p].v.toFixed(1)).join("\n")+"\nTeam WAR "+teamWar().toFixed(1);
+    navigator.clipboard.writeText(t).then(()=>{b.textContent="Copied"},()=>{b.textContent="Copy blocked"})}
+  else if(b.dataset.p!==undefined){const pl=COMBOS[S.ci].p[+b.dataset.p],el=eligible(pl);
+    if(b.dataset.pos)place(pl,b.dataset.pos);else if(el.length===1)place(pl,el[0]);else{S.ask=S.ask===+b.dataset.p?null:+b.dataset.p;drawStage()}}});
+$("blind").addEventListener("change",e=>{if(S){S.blind=e.target.checked;if(!document.body.classList.contains("pre"))render()}});
+$("go").addEventListener("click",()=>{document.body.classList.remove("pre");S=fresh();spin(null,false);scrollTo({top:0})});
+
+function start(saved){showBest();
+  fetch("data.json").then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{COMBOS=d;
+    $("go").disabled=false;$("go").textContent="Start the draft";
+    if(saved&&saved.slots&&saved.ci!==undefined){S=saved;document.body.classList.remove("pre");if(S.season&&S.shown<GAMES)S.shown=GAMES;render();if(S.ci<0&&S.round<=ROUNDS)spin(null,false)}
+  }).catch(()=>{$("go").textContent="Could not load players";$("best2").textContent="The player list did not load. Check your connection and reload the page."})}
+window.claude?.hot?.snapshot?.(()=>document.body.classList.contains("pre")||!S?{}:S);
+window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
+</script>
+</body>
+</html>
