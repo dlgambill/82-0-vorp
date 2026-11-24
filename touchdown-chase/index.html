@@ -111,7 +111,7 @@ details p strong{color:var(--ink)}
       <li><b>2</b><span>Pick any running back who ever played for them. You see names, not numbers.</span></li>
       <li><b>3</b><span>His career touchdowns go on your total, including the ones he scored for other teams.</span></li>
     </ol>
-    <p class="note">No rerolls, and each back can only be used once. A star who made a late-career stop somewhere still brings his whole career with him.</p>
+    <p class="note">Every round is a fresh random draw, so the same team can come up twice. No rerolls, and each back can only be used once. A star who made a late-career stop somewhere still brings his whole career with him.</p>
     <div class="actions"><button class="btn primary big2" id="go" disabled>Loading players</button></div>
     <p class="note num" id="best2"></p>
   </section>
@@ -140,15 +140,14 @@ let P=[],ROSTER={},S=null;
 const td=i=>P[i][1]+P[i][2];
 function lastName(n){const w=n.split(" ");let l=w[w.length-1];if(/^(jr\.?|sr\.?|ii|iii|iv|v)$/i.test(l)&&w.length>2)l=w[w.length-2];return fold(l)+" "+fold(n)}
 function years(i,t){const x=P[i][3].find(r=>r[0]===t);return x[1]===x[2]?""+x[1]:x[1]+"–"+String(x[2]).slice(2)}
-/* Best possible 20 for these teams: players are sorted by touchdowns, so taking each one that can still be seated is optimal. */
-function perfect(teams){const set=new Set(teams),m={};
-  function aug(i,seen){for(const r of P[i][3]){const t=r[0];if(!set.has(t)||seen.has(t))continue;seen.add(t);if(m[t]===undefined||aug(m[t],seen)){m[t]=i;return true}}return false}
-  let n=0;for(let i=0;i<P.length&&n<teams.length;i++)if(aug(i,new Set()))n++;
+/* Best possible pick for every round (a team can come up more than once): players are sorted by touchdowns, so taking each one that can still be seated is optimal. Returns player index by round. */
+function perfect(order){const slots={},m=[];order.forEach((t,r)=>(slots[t]=slots[t]||[]).push(r));
+  function aug(i,seen){for(const x of P[i][3])for(const r of slots[x[0]]||[]){if(seen.has(r))continue;seen.add(r);if(m[r]===undefined||aug(m[r],seen)){m[r]=i;return true}}return false}
+  let n=0;for(let i=0;i<P.length&&n<order.length;i++)if(aug(i,new Set()))n++;
   return m}
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 
 /* ---- state ---- */
-function fresh(){return{order:shuffle(Object.keys(TEAMS)).slice(0,ROUNDS),picks:[],ask:null,fresh:false}}
+function fresh(){const all=Object.keys(TEAMS);return{order:Array.from({length:ROUNDS},()=>all[Math.floor(Math.random()*all.length)]),picks:[],ask:null,fresh:false}}
 const total=()=>S.picks.reduce((a,i)=>a+td(i),0);
 const done=()=>S.picks.length>=ROUNDS;
 
@@ -160,9 +159,9 @@ function drawBoard(){const t=total(),n=S.picks.length,left=ROUNDS-n,need=Math.ma
   h+='<div class="meter" role="img" aria-label="'+fmt(t)+" of "+fmt(TARGET)+' touchdowns"><i style="width:'+Math.min(100,t/TARGET*100)+'%"></i></div>';
   h+='<div class="chain"><span>Target <strong>'+fmt(TARGET)+"</strong></span>"+(need?"<span>Need <strong>"+fmt(need)+"</strong> more</span>"+(left?"<span>That is <strong>"+Math.ceil(need/left)+"</strong> per pick</span>":""):"<span>Target reached</span>")+"</div>";
   if(n&&!done()){const i=S.picks[n-1];h+='<div class="last'+(S.fresh?" fresh":"")+'"><span><div class="name">'+esc(P[i][0])+'</div><div class="sub">'+P[i][1]+" rushing, "+P[i][2]+' receiving</div></span><span class="plus">+'+td(i)+"</span></div>"}
-  if(done()){const best=perfect(S.order),bt=S.order.reduce((a,t2)=>a+td(best[t2]),0);
+  if(done()){const best=perfect(S.order),bt=best.reduce((a,i)=>a+td(i),0);
     h+='<p class="verdict">'+verdict(t)+"</p>";
-    h+='<p class="note">'+(t>=TARGET?"You cleared the target by "+fmt(t-TARGET)+".":"You finished "+fmt(TARGET-t)+" short.")+" A perfect draft with these 20 teams was "+fmt(bt)+", so you got "+Math.round(t/bt*100)+"% of what was out there.</p>"}
+    h+='<p class="note">'+(t>=TARGET?"You cleared the target by "+fmt(t-TARGET)+".":"You finished "+fmt(TARGET-t)+" short.")+" A perfect draft with these 20 draws was "+fmt(bt)+", so you got "+Math.round(t/bt*100)+"% of what was out there.</p>"}
   $("board").innerHTML=h;S.fresh=false}
 function drawList(){const t=S.order[S.picks.length],q=fold($("q").value).trim(),used=new Set(S.picks);
   const rows=ROSTER[t].filter(i=>!used.has(i)&&(!q||fold(P[i][0]).includes(q)));
@@ -172,7 +171,7 @@ function drawList(){const t=S.order[S.picks.length],q=fold($("q").value).trim(),
 function drawStage(){const st=$("stage");
   if(done()){const best=perfect(S.order);
     st.innerHTML='<div class="eyebrow">Your 20 picks against the perfect draft</div><div class="scroll"><table class="log"><thead><tr><th>Team</th><th>Your pick</th><th class="n">TD</th><th>Best</th><th class="n">TD</th></tr></thead><tbody>'+
-      S.order.map((t,r)=>{const i=S.picks[r],b=best[t];return'<tr><td class="t">'+t+"</td><td>"+esc(P[i][0])+'</td><td class="n">'+td(i)+"</td><td>"+(b===i?"Same":esc(P[b][0]))+'</td><td class="n">'+td(b)+"</td></tr>"}).join("")+
+      S.order.map((t,r)=>{const i=S.picks[r],b=best[r];return'<tr><td class="t">'+t+"</td><td>"+esc(P[i][0])+'</td><td class="n">'+td(i)+"</td><td>"+(b===i?"Same":esc(P[b][0]))+'</td><td class="n">'+td(b)+"</td></tr>"}).join("")+
       '</tbody></table></div><div class="actions"><button class="btn primary" data-a="again">Play again</button><button class="btn" data-a="copy">Copy result</button></div>';return}
   const n=S.picks.length,t=S.order[n],T=TEAMS[t];
   st.innerHTML='<div><div class="eyebrow">Round '+(n+1)+" of "+ROUNDS+" · pick one running back</div><h2>"+esc(T[0])+"</h2>"+(T[1]?'<p class="note">'+esc(T[1])+".</p>":"")+"</div>"+
