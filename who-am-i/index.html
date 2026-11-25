@@ -116,13 +116,13 @@ body.pre #game{display:none}
   <a class="back" href="../">← All games</a>
   <header><h1 class="mark">Who Am <b>I?</b></h1></header>
   <section class="intro" id="intro">
-    <div class="eyebrow">MLB mystery player · six clues</div>
+    <div class="eyebrow">MLB mystery star · six clues</div>
     <div class="big" style="--k:34" aria-hidden="true">6</div>
     <h2 class="pitch">Six clues. One player. How fast can you name him?</h2>
     <ol class="steps">
-      <li><b>1</b><span>You get one clue about a mystery MLB player.</span></li>
+      <li><b>1</b><span>The mystery player is always a star: a Hall of Famer, a perennial All-Star or a big-number career. Clue one gives his position and exact years.</span></li>
       <li><b>2</b><span>Type a name and tap him in the list. A wrong guess unlocks the next clue.</span></li>
-      <li><b>3</b><span>The clues get easier. Miss on the sixth and the answer is revealed.</span></li>
+      <li><b>3</b><span>Next come his honors, his best season, his career numbers, his hometown and finally his teams. Miss on the sixth and the answer is revealed.</span></li>
     </ol>
     <p class="note">There is one new player every day, the same for everyone, plus as many random ones as you want.</p>
     <div class="actions"><button class="btn primary big2" id="daily" disabled>Loading players</button><button class="btn big2" id="random" disabled>Random player</button></div>
@@ -136,7 +136,7 @@ body.pre #game{display:none}
   <details><summary>How it works</summary>
     <p><strong>Who can be the mystery player.</strong> About 540 well-known players who debuted in 1920 or later: Hall of Famers, five-time All-Stars, and anyone with 2,000 hits, 300 home runs, 180 wins, 2,200 strikeouts or 300 saves.</p>
     <p><strong>Who you can guess.</strong> About 5,000 players with a real career, so the name list does not give the answer away.</p>
-    <p><strong>Where the clues come from.</strong> Career records through the 2025 season. Awards counted are MVP, Cy Young, Gold Glove, Silver Slugger and Rookie of the Year. Team names are the ones used in the years he played there.</p>
+    <p><strong>Where the clues come from.</strong> Career records through the 2025 season. Awards counted are MVP, Cy Young, Gold Glove, Silver Slugger and Rookie of the Year. League-leading seasons count home runs, RBI, hits and steals for hitters, and wins, strikeouts and saves for pitchers. A hitter's best season is the one with his most total bases. Team names are the ones used in the years he played there.</p>
   </details>
 </main>
 <script>
@@ -166,7 +166,7 @@ function guess(id){if(S.done)return;S.guesses.push(id);
   if(S.done)scrollTo({top:0,behavior:"smooth"})}
 
 function render(){const a=A[S.ai],no=S.day-DAY0+1;let h="";
-  h+='<div class="eyebrow">'+(S.mode==="daily"?"Today's player · No. "+no:"Random player")+"</div>";
+  h+='<div class="eyebrow">'+(S.mode==="daily"?"Today's star · No. "+no:"Random star")+" · one of "+A.length+"</div>";
   if(!S.done){h+='<div class="big" style="--k:19;line-height:1;margin:0">Clue '+S.shown+'</div><div class="chain"><span><strong>'+(CLUES-S.shown+1)+"</strong> guess"+(CLUES-S.shown?"es":"")+" left</span><span>Newest clue is on top</span></div>"}
   else{h+='<h2 class="answer">'+esc(a[1])+"</h2>"+'<div class="chain"><span>'+a[2]+'</span></div><p class="verdict">'+(S.won?VERDICT[S.guesses.length]:"Out of clues")+"</p>"+
     '<p class="note">'+(S.won?"You got him on clue "+S.guesses.length+" of "+CLUES+".":"He stays a mystery this time.")+(S.mode==="daily"?" A new player arrives at midnight.":"")+"</p>"}

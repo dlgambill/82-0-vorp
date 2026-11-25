@@ -13,6 +13,32 @@ for r in R('Batting'):
 for r in R('Pitching'):
     p=pit[r['playerID']]
     for k in('G','GS','W','L','SO','SV','ER','IPouts'): p[k]+=n(r[k])
+bs=collections.defaultdict(lambda:collections.defaultdict(collections.Counter));ps=collections.defaultdict(lambda:collections.defaultdict(collections.Counter))
+bl=collections.defaultdict(collections.Counter);pl_=collections.defaultdict(collections.Counter)
+for r in R('Batting'):
+    y=int(r['yearID'])
+    for k in('AB','H','X2B','X3B','HR','RBI','SB'):
+        v=n(r.get(k,'0'));bs[r['playerID']][y][k]+=v
+        if k in('H','HR','RBI','SB'): bl[(y,r['lgID'],k)][r['playerID']]+=v
+for r in R('Pitching'):
+    y=int(r['yearID'])
+    for k in('W','L','SO','SV','ER','IPouts'):
+        v=n(r[k]);ps[r['playerID']][y][k]+=v
+        if k in('W','SO','SV'): pl_[(y,r['lgID'],k)][r['playerID']]+=v
+led=collections.defaultdict(collections.Counter)
+for src in (bl,pl_):
+    for (y,lg,k),c in src.items():
+        if lg not in('AL','NL') or y<1901: continue
+        m=max(c.values())
+        if m<=0: continue
+        for pid,v in c.items():
+            if v==m: led[pid][k]+=1
+TIMES=lambda k:'once' if k==1 else 'twice' if k==2 else '%d times'%k
+LEDN={'HR':'home runs','RBI':'RBI','H':'hits','SB':'stolen bases','W':'wins','SO':'strikeouts','SV':'saves'}
+frn={(r['yearID'],r['teamID']):r['franchID'] for r in R('Teams')}
+nfr=collections.defaultdict(set)
+for r in R('Batting'): nfr[r['playerID']].add(frn.get((r['yearID'],r['teamID']),r['teamID']))
+def join(h): return h[0] if len(h)==1 else ' and '.join(h) if len(h)==2 else ', '.join(h[:-1])+', and '+h[-1]
 POS=[('G_p','Pitcher'),('G_c','Catcher'),('G_1b','First baseman'),('G_2b','Second baseman'),('G_3b','Third baseman'),('G_ss','Shortstop'),('G_lf','Left fielder'),('G_cf','Center fielder'),('G_rf','Right fielder'),('G_dh','Designated hitter')]
 app=collections.defaultdict(collections.Counter)
 for r in R('Appearances'):
@@ -41,33 +67,52 @@ def teams(pid):
         by[t]=[str(a) if a==b else '%d–%d'%(a,b) for a,b in sp]
     return by
 def clues(pid,isP):
-    p=ppl[pid];a,b=years(pid);c=[]
+    p=ppl[pid];a,b=years(pid);c=[];active=(not b or b>='2025')
+    span='since %s and was still active in 2025'%a if active else 'from %s to %s'%(a,b)
+    # 1. who and when
     if isP:
         role='starting pitcher' if pit[pid]['GS']>=0.5*pit[pid]['G'] else 'relief pitcher'
-        c.append('I was a %s. I threw %s-handed.'%(role,HAND.get(p['throws'],'right')))
+        c.append('I %s a %s-handed %s who %s pitched %s.'%('am' if active else 'was',HAND.get(p['throws'],'right'),role,'has' if active else '',span))
     else:
-        g=app[pid];pos=max(POS[1:],key=lambda x:g[x[0]])[1]
-        c.append('I was a %s. I batted %s and threw %s-handed.'%(pos.lower(),{'R':'right-handed','L':'left-handed','B':'from both sides'}.get(p['bats'],'right-handed'),HAND.get(p['throws'],'right')))
-    ns=len({y for y,_,_ in stints[pid]})
-    c.append('I debuted in %s, have played %s, and was still active in 2025.'%(a,plural(ns,'season')) if (not b or b>='2025') else 'I debuted in %s and played %s, through %s.'%(a,plural(ns,'season'),b))
-    if p['birthCountry']=='USA' and p['birthState'] in US: c.append('I was born in %s.'%US[p['birthState']])
-    else: c.append('I was born in %s.'%CTRY.get(p['birthCountry'],p['birthCountry']))
+        g=app[pid];pos=max(POS[1:],key=lambda x:g[x[0]])[1].lower()
+        bt={'R':'right-handed','L':'left-handed','B':'from both sides'}.get(p['bats'],'right-handed')
+        c.append('I %s a %s who %s played %s. I %s %s and %s %s-handed.'%('am' if active else 'was',pos,'has' if active else '',span,'bat' if active else 'batted',bt,'throw' if active else 'threw',HAND.get(p['throws'],'right')))
+    c[-1]=c[-1].replace('  ',' ')
+    # 2. honors and league-leading seasons
     h=[]
-    if pid in hof: h.append('I am in the Hall of Fame')
+    if pid in hof: h.append('am in the Hall of Fame')
     k=len(asg[pid])
-    if k: h.append(('I was' if not h else 'was')+' an All-Star in '+plural(k,'season'))
+    if k: h.append('was an All-Star in '+plural(k,'season'))
     for key,lab in (('Most Valuable Player','MVP award'),('Cy Young Award','Cy Young Award'),('Gold Glove','Gold Glove'),('Silver Slugger','Silver Slugger')):
-        if aw[pid][key]: h.append(('I won ' if not h else 'won ')+plural(aw[pid][key],lab))
-    if aw[pid]['Rookie of the Year']: h.append(('I was' if not h else 'was')+' Rookie of the Year')
-    if not h: c.append('I never made an All-Star team or won a major award.')
-    else: c.append((', '.join(h[:-1])+(', and ' if len(h)>2 else ' and ' if len(h)==2 else '')+h[-1] if len(h)>1 else h[0])+'.')
+        if aw[pid][key]: h.append('won '+plural(aw[pid][key],lab))
+    if aw[pid]['Rookie of the Year']: h.append('was Rookie of the Year')
+    t='I '+join(h)+'.' if h else 'I never made an All-Star team or won a major award.'
+    L=[(LEDN[k2],v) for k2,v in led[pid].items()];L.sort(key=lambda x:-x[1])
+    if L: t+=' I led my league in '+join(['%s %s'%(n2,TIMES(v)) for n2,v in L])+'.'
+    c.append(t)
+    # 3. best season
+    if isP:
+        ss=ps[pid];sp=pit[pid]['GS']>=0.5*pit[pid]['G']
+        y=max(ss,key=lambda y:(ss[y]['W'],ss[y]['SO']) if sp else (ss[y]['SV'],ss[y]['SO']));q=ss[y];era=q['ER']*27/q['IPouts'] if q['IPouts'] else 0
+        c.append('My best season was %d: %s, %s, a %.2f ERA and %s.'%(y,plural(q['W'],'win'),plural(q['L'],'loss').replace('losss','losses'),era,plural(q['SO'],'strikeout')) if sp else 'My best season was %d: %s, a %.2f ERA and %s.'%(y,plural(q['SV'],'save'),era,plural(q['SO'],'strikeout')))
+    else:
+        ss=bs[pid];tb=lambda q:q['H']+q['X2B']+2*q['X3B']+3*q['HR']
+        y=max(ss,key=lambda y:tb(ss[y]));q=ss[y]
+        c.append('My best season was %d: a %s average, %s, %s RBI and %s.'%(y,('%.3f'%(q['H']/q['AB'])).lstrip('0') if q['AB'] else '.000',plural(q['HR'],'home run'),q['RBI'],plural(q['SB'],'stolen base')))
+    # 4. career line
     if isP:
         q=pit[pid];era=q['ER']*27/q['IPouts'] if q['IPouts'] else 0
-        c.append('My career line: %d wins, %d losses, a %.2f ERA, %s strikeouts and %s.'%(q['W'],q['L'],era,format(q['SO'],','),plural(q['SV'],'save')))
+        c.append('My career line: %s, %s, a %.2f ERA, %s and %s.'%(plural(q['W'],'win'),plural(q['L'],'loss').replace('losss','losses'),era,plural(q['SO'],'strikeout'),plural(q['SV'],'save')))
     else:
-        q=bat[pid];c.append('My career line: %s hits, %s, %s and a %s batting average.'%(format(q['H'],','),plural(q['HR'],'home run'),plural(q['SB'],'stolen base'),('%.3f'%(q['H']/q['AB'])).lstrip('0')))
+        q=bat[pid];c.append('My career line: %s, %s, %s and a %s batting average.'%(plural(q['H'],'hit'),plural(q['HR'],'home run'),plural(q['SB'],'stolen base'),('%.3f'%(q['H']/q['AB'])).lstrip('0')))
+    # 5. birthplace and number of teams
+    place=US[p['birthState']] if p['birthCountry']=='USA' and p['birthState'] in US else CTRY.get(p['birthCountry'],p['birthCountry']).replace('the ','')
+    city=p['birthCity'] if p['birthCity'] not in('','NA') else ''
+    k=len(nfr[pid])
+    c.append('I was born in %s%s, and I %s.'%(city+', ' if city else '',place,('have played for one team so far' if active else 'played for one team my whole career') if k==1 else ('have played for %d teams'%k if active else 'played for %d teams'%k)))
+    # 6. teams
     t=teams(pid)
-    c.append('I played for the '+'; the '.join('%s (%s)'%(k,', '.join(v)) for k,v in t.items())+'.')
+    c.append('I played for the '+'; the '.join('%s (%s)'%(k2,', '.join(v)) for k2,v in t.items())+'.')
     return c
 ans=[];names=[]
 for pid,p in ppl.items():
