@@ -143,7 +143,7 @@ details p strong{color:var(--ink)}
     <p><strong>Before 1973-74 there is no VORP,</strong> so those seasons (1949-50 on) use an estimate from Win Shares: VORP = 0.471 x Win Shares - 0.85. On seasons that have both stats the estimate is typically within 0.6. Estimates are marked with ~.</p>
     <p><strong>Positions.</strong> Solid tags are where he was listed with that team. Dashed tags are secondary spots: spots where he played at least 20% of his minutes for that team in a season (tracked since 1996-97). Before 2000, it is any position he was listed at in his career. No penalty for using one.</p>
     <p><strong>Team VORP becomes a net rating.</strong> A team of replacement players is about 10 points worse than average per 100 possessions, and every point of VORP buys one back. Your bench is replacement level, so net rating = team VORP minus 10.</p>
-    <p><strong>Then 82 games get played.</strong> Each night adds the opponent's strength, home court (2.5 points) and normal game-to-game swing. A +10 team wins about 8 of 10. Going 82-0 needs roughly 38 VORP or better, plus luck.</p>
+    <p><strong>Then 82 games get played.</strong> Each night adds the opponent's strength, home court (2.5 points) and normal game-to-game swing. A +10 team wins about 8 of 10. Going 82-0 is about a coin flip at 36 team VORP, and your exact chance shows once all five are drafted.</p>
     <p id="best" class="num"></p>
   </details>
 </main>
@@ -151,7 +151,7 @@ details p strong{color:var(--ink)}
 const COMBOS=__DATA__;
 const POS=["PG","SG","SF","PF","C"];
 const OPP=["ATL","BOS","BRK","CHI","CHO","CLE","DAL","DEN","DET","GSW","HOU","IND","LAC","LAL","MEM","MIA","MIL","MIN","NOP","NYK","OKC","ORL","PHI","PHO","POR","SAC","SAS","TOR","UTA","WAS"];
-const SIGMA=12, OPP_SD=4.5, HOME=2.5, ROUNDS=5;
+const SIGMA=10, OPP_SD=4.5, HOME=2.5, ROUNDS=5;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
@@ -161,6 +161,7 @@ function phi(x){const t=1/(1+.2316419*Math.abs(x)),d=.3989423*Math.exp(-x*x/2);
   const p=d*t*(.3193815+t*(-.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return x>0?1-p:p}
 function netRating(vorp){return vorp-10}
 function expectedWins(vorp){return 82*phi(netRating(vorp)/Math.hypot(SIGMA,OPP_SD))}
+function perfectOdds(vorp){const nr=netRating(vorp),h=Math.hypot(SIGMA,OPP_SD);return Math.pow(phi((nr+HOME)/h)*phi((nr-HOME)/h),41)}
 function gauss(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
 function simSeason(vorp){const nr=netRating(vorp),g=[];
   for(let i=0;i<82;i++){const home=i%2===0,opp=OPP[Math.floor(Math.random()*OPP.length)];
@@ -213,7 +214,7 @@ function drawBoard(){const tv=teamVorp(),nr=netRating(tv),hide=S.blind&&!S.seaso
   $("board").innerHTML='<div class="eyebrow">'+label+'</div>'+
     '<div class="record'+(done&&w===82?" perfect":"")+'" aria-label="'+(hide?"hidden":w+" wins, "+l+" losses")+'">'+(hide?'??<span class="dash">–</span>??':w+'<span class="dash">–</span>'+l)+"</div>"+
     (hide?'<div class="chain">VORP is hidden until the season is played.</div>':
-    '<div class="chain"><span>Team VORP <strong>'+fmt(tv)+'</strong></span><span>Net rating <strong>'+(nr>0?"+":"")+fmt(nr)+'</strong></span><span>Win odds per game <strong>'+Math.round(phi(nr/Math.hypot(SIGMA,OPP_SD))*100)+"%</strong></span></div>")+extra}
+    '<div class="chain"><span>Team VORP <strong>'+fmt(tv)+'</strong></span><span>Net rating <strong>'+(nr>0?"+":"")+fmt(nr)+'</strong></span><span>Win odds per game <strong>'+Math.round(phi(nr/Math.hypot(SIGMA,OPP_SD))*100)+"%</strong></span>"+(drafted().length===ROUNDS&&!S.season?"<span>Chance of 82-0 <strong>"+(perfectOdds(tv)<.005?"under 1":Math.round(perfectOdds(tv)*100))+"%</strong></span>":"")+"</div>")+extra}
 function drawLineup(){const hide=S.blind&&!S.season;
   $("lineup").innerHTML=POS.map(p=>{const x=S.slots[p];return x?
     '<li class="filled'+(S.fresh===p?" fresh":"")+'"><span class="pos">'+p+'</span><span class="who"><div class="name">'+esc(x.n)+'</div><div class="sub">'+esc(x.t)+", "+(x.s-1)+"-"+String(x.s).slice(2)+'</div></span><span class="v">'+(hide?"?":(x.e?"~":"")+fmt(x.v))+"</span></li>":
