@@ -145,12 +145,12 @@ function perfect(order){const cand=[],seen=new Set();
   const out=new Array(n);for(let j=1;j<=m;j++)if(p[j])out[p[j]-1]=cand[j-1];return out}
 
 /* ---- state ---- */
-function fresh(){const all=Object.keys(TEAMS);return{order:Array.from({length:ROUNDS},()=>all[Math.floor(Math.random()*all.length)]),picks:[],ask:null,fresh:false}}
+function fresh(){const all=Object.keys(TEAMS);return{order:Array.from({length:ROUNDS},()=>all[Math.floor(Math.random()*all.length)]),picks:[],ask:null,fresh:false,respins:CFG.respins||0}}
 const total=()=>S.picks.reduce((a,i,r)=>a+val(i,S.order[r]),0);
 const done=()=>S.picks.length>=ROUNDS;
 
 /* ---- render ---- */
-function verdict(t){return t>=TARGET*1.1?"Hall of Fame draft":t>=TARGET?"Target hit":t>=TARGET*.92?"So close":t>=TARGET*.65?"Came up short":"Back to the film room"}
+function verdict(t){if(CFG.win)return t>=TARGET?CFG.win:t>=TARGET*.92?"So close":CFG.lose;return t>=TARGET*1.1?"Hall of Fame draft":t>=TARGET?"Target hit":t>=TARGET*.92?"So close":t>=TARGET*.65?"Came up short":"Back to the film room"}
 function drawBoard(){const t=total(),n=S.picks.length,left=ROUNDS-n,need=Math.max(0,TARGET-t);let h="";
   h+='<div class="eyebrow">'+(done()?"Final total":n?"Total after "+n+" of "+ROUNDS:"Your total")+"</div>";
   h+='<div class="big'+(t>=TARGET?" hit":"")+'" style="--k:'+bigK(fmt(t))+'">'+fmt(t)+"</div>";
@@ -175,6 +175,7 @@ function drawStage(){const st=$("stage");
       '</tbody></table></div><div class="actions"><button class="btn primary" data-a="again">Play again</button><button class="btn" data-a="copy">Copy result</button></div>';return}
   const n=S.picks.length,t=S.order[n],T=TEAMS[t];
   st.innerHTML='<div><div class="eyebrow">Round '+(n+1)+" of "+ROUNDS+" · pick one "+CFG.noun+"</div><h2>"+esc(T[0])+"</h2>"+(T[1]?'<p class="note">'+esc(T[1])+".</p>":"")+"</div>"+
+    (CFG.respins?'<div class="actions"><button class="btn" data-a="respin"'+(S.respins>0?"":" disabled")+">"+(S.respins>0?"Respin team":"Respin used")+"</button></div>":"")+
     '<input class="search" id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Search by name" aria-label="Search by name">'+
     '<p class="note" id="count"></p><ul class="pool" id="pool"></ul>'+
     (n?'<details id="mine"><summary>Your picks so far ('+n+')</summary><table class="log"><tbody>'+S.picks.map((i,r)=>'<tr><td class="t">'+S.order[r]+"</td><td>"+esc(P[i][0])+'</td><td class="n">'+fmt(val(i,S.order[r]))+"</td></tr>").join("")+"</tbody></table></details>":"");
@@ -188,10 +189,10 @@ function showBest(){let s="";try{const b=JSON.parse(localStorage.getItem(KEY)||"
 document.title=CFG.title.join(" ");
 $("mark").innerHTML=esc(CFG.title[0])+" <b>"+esc(CFG.title[1])+"</b>";
 $("i-eye").textContent=CFG.eyebrow;
-$("i-big").textContent=fmt(TARGET);$("i-big").style.setProperty("--k",bigK(fmt(TARGET)));
-$("i-pitch").textContent=ROUNDS+" teams. "+ROUNDS+" "+CFG.nouns+". "+fmt(TARGET)+" "+CFG.unit+".";
+$("i-big").textContent=CFG.big||fmt(TARGET);$("i-big").style.setProperty("--k",bigK(CFG.big||fmt(TARGET)));
+$("i-pitch").textContent=CFG.pitch||ROUNDS+" teams. "+ROUNDS+" "+CFG.nouns+". "+fmt(TARGET)+" "+CFG.unit+".";
 $("i-steps").innerHTML=["You get a random "+CFG.league+" team.","Pick any "+CFG.noun+" who ever played for them. You see names, not numbers.",CFG.step3].map((s,i)=>"<li><b>"+(i+1)+"</b><span>"+esc(s)+"</span></li>").join("");
-$("i-note").textContent="Every round is a fresh random draw, so the same team can come up twice. No rerolls, and each "+CFG.noun+" can only be used once. You need to average "+fmt(Math.ceil(TARGET/ROUNDS))+" a pick."+(CFG.tip?" "+CFG.tip:"");
+$("i-note").textContent="Every round is a fresh random draw, so the same team can come up twice. "+(CFG.respins?"You get one respin if you do not like a team":"No rerolls")+", and each "+CFG.noun+" can only be used once. You need to average "+fmt(Math.ceil(TARGET/ROUNDS))+" a pick."+(CFG.tip?" "+CFG.tip:"");
 $("counts").innerHTML=CFG.counts.map(p=>"<p><strong>"+esc(p[0])+"</strong> "+esc(p[1])+"</p>").join("");
 
 /* ---- events ---- */
@@ -201,6 +202,7 @@ $("stage").addEventListener("click",e=>{const b=e.target.closest("button");if(!b
     render();scrollTo({top:0,behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"})}
   else if(b.dataset.i!==undefined){const i=+b.dataset.i;S.ask=S.ask===i?null:i;drawList()}
   else if(b.dataset.a==="again"){S=fresh();render();scrollTo({top:0})}
+  else if(b.dataset.a==="respin"&&S.respins>0){const n=S.picks.length,all=Object.keys(TEAMS).filter(t=>t!==S.order[n]);S.order[n]=all[Math.floor(Math.random()*all.length)];S.respins--;S.ask=null;drawStage()}
   else if(b.dataset.a==="copy"){const t=total();
     const txt=CFG.title.join(" ")+": "+fmt(t)+" of "+fmt(TARGET)+" ("+verdict(t)+")\n"+S.order.map((tm,r)=>tm+" "+P[S.picks[r]][0]+" "+fmt(val(S.picks[r],tm))).join("\n");
     navigator.clipboard.writeText(txt).then(()=>{b.textContent="Copied"},()=>{b.textContent="Copy blocked"})}});

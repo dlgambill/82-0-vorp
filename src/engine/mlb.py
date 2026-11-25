@@ -26,8 +26,8 @@ def write(g,P,i,keepfn):
     os.makedirs(outdir+'/'+g,exist_ok=True);f=outdir+'/'+g+'/data.json'
     json.dump(out,open(f,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
     print(g,len(out),os.path.getsize(f),[(p[0],p[1]) for p in out[:8]])
-B=load('Batting.csv',['HR','H']);Pi=load('Pitching.csv',['SO','G'])
+B=load('Batting.csv',['HR','H','SB']);Pi=load('Pitching.csv',['SO','G'])
 hitter=lambda pid:not (ga[pid] and gp[pid]>=0.5*ga[pid])
-write('home-run-chase',B,0,hitter);write('hit-parade',B,1,hitter)
+write('catch-rickey',B,2,lambda pid:hitter(pid) and name.get(pid)!='Rickey Henderson');write('home-run-chase',B,0,hitter);write('hit-parade',B,1,hitter)
 write('k-count',Pi,0,lambda pid:Pi[pid]['tot'][1]>=50 or (ga[pid] and gp[pid]>=0.3*ga[pid]))
 print(sorted(cur))
