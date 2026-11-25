@@ -30,11 +30,12 @@ G=[
       step3="His career home runs go on your total, including the ones he hit for other teams.",tip="Sluggers bounce around late. Know where they landed.",
       menu="15 random teams, 15 hitters. Stack career home runs without seeing the numbers.",
       counts=[["Home runs are regular season only,","through the 2025 season. The 2026 season is not in the data yet."],["Who is in the pool.","Every non-pitcher who has played for the franchise, back to 1876. Negro Leagues statistics are not in this data set."],FR]),
- dict(id="catch-rickey",title=["Catch","Rickey"],sport="MLB",league="MLB",teams=MLB,accL="#0b6b4f",accD="#3fd0a0",rounds=2,target=1407,respins=1,scope="career",unit="stolen bases",abbr="SB",noun="player",nouns="players",eyebrow="MLB · career stolen bases",
-      big="1,406",pitch="Rickey Henderson stole 1,406 bases. You get two players to steal more.",win="You caught Rickey",lose="Rickey is still safe",
-      step3="His career stolen bases go on your total, no matter which teams he stole them for. Beat 1,406 and you win.",tip="Rickey himself is off the board.",
-      menu="Rickey Henderson stole 1,406 bases. You get two teams and one respin to find two players who out-stole him.",
-      counts=[["Stolen bases are career totals,","regular season only, through the 2025 season. The 2026 season is not in the data yet."],["The number to beat.","Rickey Henderson's 1,406 career steals is the all-time record. You need 1,407 from two players, and he is not in the player pool."],["Who is in the pool.","Every non-pitcher who has played for the franchise, back to 1876. Negro Leagues statistics are not in this data set."],FR]),
+ dict(id="catch-rickey",title=["Catch","Rickey"],sport="MLB",league="MLB",teams=MLB,accL="#0b6b4f",accD="#3fd0a0",rounds=5,target=1407,respins=1,top=15,scope="team",unit="stolen bases",abbr="SB",noun="player",nouns="players",eyebrow="MLB · stolen bases for that team only",
+      big="1,406",pitch="Rickey Henderson stole 1,406 bases. You get five players to steal more.",win="You caught Rickey",lose="Rickey is still safe",
+      step2="You see that team's 15 all-time leading base stealers, A to Z, with no numbers. Pick one.",
+      step3="Only the bases he stole for that team go on your total. Beat 1,406 and you win.",tip="Rickey himself is off the board.",
+      menu="Rickey Henderson stole 1,406 bases. You get five teams and one respin to out-steal him, picking from each team's top 15.",
+      counts=[["Stolen bases are regular season only","and only for the team you drew, through the 2025 season. The 2026 season is not in the data yet."],["The number to beat.","Rickey Henderson's 1,406 career steals is the all-time record. You need 1,407, and he is not in the player pool."],["Who is in the pool.","Each franchise's 15 all-time leaders in stolen bases for that franchise, listed alphabetically. Negro Leagues statistics are not in this data set."],FR]),
  dict(id="k-count",title=["K","Count"],sport="MLB",league="MLB",teams=MLB,accL="#0f6b78",accD="#4fc3d1",rounds=15,scope="career",unit="strikeouts",abbr="K",noun="pitcher",nouns="pitchers",eyebrow="MLB pitchers · career strikeouts",
       step3="His career strikeouts go on your total, including the ones he threw for other teams.",tip="Aces get traded at the deadline. That helps you.",
       menu="15 random teams, 15 pitchers. Career strikeouts, names only.",
@@ -49,6 +50,12 @@ menu=[]
 for g in G:
     d=out+'/'+g['id'];P=json.load(open(d+'/data.json',encoding='utf-8'))
     team=g['scope']=='team'
+    if g.get('top'):  # keep only each team's top N by value for that team
+        keep=set()
+        for t in g['teams']:
+            for v,i in sorted(((x[3],i) for i,p in enumerate(P) for x in p[3] if x[0]==t),reverse=True)[:g['top']]: keep.add((i,t))
+        P=[[p[0],p[1],p[2],[x for x in p[3] if (i,x[0]) in keep]] for i,p in enumerate(P)];P=[p for p in P if p[3]]
+        json.dump(P,open(d+'/data.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
     if not team:  # career games do not need per-team values
         P=[[p[0],p[1],p[2],[t[:3] for t in p[3]]] for p in P]
         json.dump(P,open(d+'/data.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
@@ -65,7 +72,7 @@ for g in G:
     if 'target' not in g:
         raw=avg*0.87;step=10**(len(str(int(raw)))-2);g['target']=int(round(raw/step)*step)
     print('%-16s rounds %2d  top-pick avg %9.0f  min %8d  target %8d (%.0f%%)  pool/team %d-%d  data %dKB'%(g['id'],g['rounds'],avg,min(res),g['target'],100*g['target']/avg,min(map(len,ro.values())),max(map(len,ro.values())),os.path.getsize(d+'/data.json')//1024))
-    cfg={k:g[k] for k in('id','title','league','teams','rounds','target','scope','unit','abbr','noun','nouns','eyebrow','step3','tip','counts','respins','big','pitch','win','lose') if k in g}
+    cfg={k:g[k] for k in('id','title','league','teams','rounds','target','scope','unit','abbr','noun','nouns','eyebrow','step3','tip','counts','respins','big','pitch','win','lose','step2') if k in g}
     html=eng.replace('__TITLE__',' '.join(g['title'])).replace('__ACC_L__',g['accL']).replace('__ACC_D__',g['accD']).replace('__CFG__',json.dumps(cfg,ensure_ascii=False).replace('</','<\\/'))
     open(d+'/index.html','w',encoding='utf-8').write(html)
     menu.append({k:g[k] for k in('id','title','sport','accL','accD','menu')})

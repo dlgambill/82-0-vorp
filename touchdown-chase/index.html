@@ -180,6 +180,7 @@ function drawStage(){const st=$("stage");
     '<p class="note" id="count"></p><ul class="pool" id="pool"></ul>'+
     (n?'<details id="mine"><summary>Your picks so far ('+n+')</summary><table class="log"><tbody>'+S.picks.map((i,r)=>'<tr><td class="t">'+S.order[r]+"</td><td>"+esc(P[i][0])+'</td><td class="n">'+fmt(val(i,S.order[r]))+"</td></tr>").join("")+"</tbody></table></details>":"");
   $("q").addEventListener("input",()=>{S.ask=null;drawList()});
+  if(ROSTER[t].length<=20)$("q").hidden=true;
   drawList()}
 function render(){drawBoard();drawStage();showBest()}
 const KEY="best_"+CFG.id;
@@ -191,7 +192,7 @@ $("mark").innerHTML=esc(CFG.title[0])+" <b>"+esc(CFG.title[1])+"</b>";
 $("i-eye").textContent=CFG.eyebrow;
 $("i-big").textContent=CFG.big||fmt(TARGET);$("i-big").style.setProperty("--k",bigK(CFG.big||fmt(TARGET)));
 $("i-pitch").textContent=CFG.pitch||ROUNDS+" teams. "+ROUNDS+" "+CFG.nouns+". "+fmt(TARGET)+" "+CFG.unit+".";
-$("i-steps").innerHTML=["You get a random "+CFG.league+" team.","Pick any "+CFG.noun+" who ever played for them. You see names, not numbers.",CFG.step3].map((s,i)=>"<li><b>"+(i+1)+"</b><span>"+esc(s)+"</span></li>").join("");
+$("i-steps").innerHTML=["You get a random "+CFG.league+" team.",CFG.step2||"Pick any "+CFG.noun+" who ever played for them. You see names, not numbers.",CFG.step3].map((s,i)=>"<li><b>"+(i+1)+"</b><span>"+esc(s)+"</span></li>").join("");
 $("i-note").textContent="Every round is a fresh random draw, so the same team can come up twice. "+(CFG.respins?"You get one respin if you do not like a team":"No rerolls")+", and each "+CFG.noun+" can only be used once. You need to average "+fmt(Math.ceil(TARGET/ROUNDS))+" a pick."+(CFG.tip?" "+CFG.tip:"");
 $("counts").innerHTML=CFG.counts.map(p=>"<p><strong>"+esc(p[0])+"</strong> "+esc(p[1])+"</p>").join("");
 
