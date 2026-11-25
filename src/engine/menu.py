@@ -3,6 +3,7 @@ out,dest=sys.argv[1],sys.argv[2]
 G=json.load(open(out+'/menu.json'))
 extra=[dict(id='82-0',title=['82-0','VORP'],sport='NBA',accL='#d9480f',accD='#ff6b2c',menu='Draft five players from random teams and decades, then play all 82 games. Can your lineup go unbeaten?')]
 if len(sys.argv)>3: extra.append(dict(id='162-0',title=['162-0','WAR'],sport='MLB',accL='#b3261e',accD='#ff7466',menu=sys.argv[3]))
+extra.append(dict(id='who-am-i',title=['Who Am','I?'],sport='MLB',accL='#a3195b',accD='#ff7ab3',menu='Guess the mystery player. Every wrong guess unlocks another clue, and you get six. New player every day.'))
 G=extra+G
 order=['NBA','NFL','MLB'];first={'NBA':'82-0','MLB':'162-0'}
 html=open('/home/claude/work/menu.html',encoding='utf-8').read()

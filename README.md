@@ -23,6 +23,7 @@ MLB
 - **Home Run Chase** - 15 hitters, 7,600 career home runs.
 - **K Count** - 15 pitchers, 47,000 career strikeouts.
 - **Hit Parade** - Only the hits a player got for that team count.
+- **Who Am I?** - Guess the mystery player. Every wrong guess unlocks another clue, and you get six. There is a new one every day.
 - **Catch Rickey** - Rickey Henderson stole 1,406 bases. You get four teams and one respin to out-steal him, picking from each team's top 15 base stealers.
 
 In most of these you only see names. The numbers show up after you lock in your pick.

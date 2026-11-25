@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Who Am I?</title>
+<script>/* Phone browser in "Desktop site" mode ignores the viewport tag and lays out ~980px wide. Zoom back to phone size. */
+(function(){var s=screen.width,w=window.innerWidth;if(s<600&&w>s*1.4)document.documentElement.style.zoom=w/s})();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a scorer's sheet, same system as 82-0 VORP. One loud element (the running total), everything else ruled rows. The clue count is the loud element here; clues are ruled rows that unlock one at a time. */
+:root{
+  --bg:#e9edf1; --surface:#ffffff; --ink:#0d1a2c; --muted:#566376; --line:#c9d1da;
+  --accent:#a3195b; --on-accent:#ffffff;
+  --display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0a121d; --surface:#131f30; --ink:#edf1f6; --muted:#96a3b5; --line:#293950;
+    --accent:#ff7ab3; --on-accent:#0a121d; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0a121d; --surface:#131f30; --ink:#edf1f6; --muted:#96a3b5; --line:#293950;
+  --accent:#ff7ab3; --on-accent:#0a121d; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+main{container-type:inline-size;max-width:680px;margin:0 auto;padding:16px 16px 48px;display:flex;flex-direction:column;gap:20px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,summary:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.note{font-size:13px;color:var(--muted);margin:0}
+
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:10px}
+.back{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;align-self:flex-start}
+.mark{font-family:var(--display);font-weight:900;font-size:26px;letter-spacing:.02em;line-height:1;margin:0;text-transform:uppercase}
+.mark b{color:var(--accent);font-weight:900}
+
+.big{font-family:var(--display);font-weight:900;line-height:.82;font-size:clamp(64px,calc(var(--k,34)*1cqw),216px);letter-spacing:-.01em;margin:6px 0 2px}
+.big.hit{color:var(--accent)}
+.pitch{font-family:var(--display);font-weight:800;font-size:clamp(28px,8.5cqw,44px);line-height:1;text-transform:uppercase;letter-spacing:.01em;margin:0;text-wrap:balance}
+.steps{list-style:none;margin:4px 0 0;padding:0;border-top:2px solid var(--ink)}
+.steps li{display:grid;grid-template-columns:34px 1fr;align-items:baseline;gap:8px;padding:11px 0;border-bottom:1px solid var(--line)}
+.steps b{font-family:var(--display);font-weight:900;font-size:26px;line-height:1;color:var(--accent)}
+.intro{display:none;flex-direction:column;gap:14px}
+body.pre .intro{display:flex}
+body.pre #board,body.pre #stage{display:none}
+
+.board{display:flex;flex-direction:column;gap:6px}
+.meter{position:relative;height:14px;background:var(--surface);border:1px solid var(--line);border-radius:2px;overflow:hidden}
+.meter i{position:absolute;inset:0 auto 0 0;background:var(--accent);transition:width .6s var(--ease)}
+.chain{font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 14px}
+.chain strong{color:var(--ink);font-family:var(--mono);font-weight:600}
+.last{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:4px;padding:10px 12px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-top:6px}
+.last.fresh{animation:land .6s var(--ease)}
+@keyframes land{from{background:color-mix(in srgb,var(--accent) 24%,var(--surface))}to{background:var(--surface)}}
+.last .name{font-weight:600}
+.last .sub{font-size:12px;color:var(--muted)}
+.plus{font-family:var(--display);font-weight:900;font-size:34px;line-height:1;color:var(--accent)}
+.verdict{font-family:var(--display);font-weight:800;font-size:30px;line-height:1.05;text-transform:uppercase;letter-spacing:.02em;margin:8px 0 0;text-wrap:balance}
+
+.draw{display:flex;flex-direction:column;gap:12px}
+.draw h2{font-family:var(--display);font-weight:900;font-size:clamp(34px,10cqw,52px);line-height:.95;text-transform:uppercase;margin:2px 0 0;text-wrap:balance}
+.search{width:100%;min-height:48px;padding:10px 12px;border:1.5px solid var(--ink);border-radius:4px;background:var(--surface)}
+.search::placeholder{color:var(--muted)}
+.pool{list-style:none;margin:0;padding:0;border-top:2px solid var(--ink)}
+.pool li{border-bottom:1px solid var(--line)}
+.pick{width:100%;display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:11px 4px;background:none;border:0;text-align:left;min-height:48px}
+.pick .name{font-weight:600;overflow-wrap:anywhere}
+.pick .yrs{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pick:hover .name,.pick[aria-expanded="true"] .name{color:var(--accent)}
+.lock{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:0 4px 12px;font-size:13px;color:var(--muted)}
+.btn{border:1.5px solid var(--ink);background:transparent;border-radius:4px;padding:10px 14px;font-weight:600;font-size:14px;min-height:44px;transition:transform .15s var(--ease)}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;border-style:dashed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.big2{font-size:17px;padding:14px 22px;min-height:54px;flex:1 1 220px;max-width:340px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+
+.log{width:100%;border-collapse:collapse;font-size:14px}
+.log th{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 4px;border-bottom:2px solid var(--ink)}
+.log td{padding:8px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+.log td.t{font-family:var(--display);font-weight:800;font-size:17px;white-space:nowrap}
+.log td.n,.log th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600}
+.log .sub{display:block;font-size:12px;color:var(--muted)}
+.scroll{overflow-x:auto}
+details{border-top:1px solid var(--line);padding-top:12px;font-size:14px}
+summary{font-weight:600;cursor:pointer}
+details p{max-width:62ch;margin:10px 0 0;color:var(--muted)}
+details p strong{color:var(--ink)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.clues{list-style:none;margin:0;padding:0;border-top:2px solid var(--ink)}
+.clues li{display:grid;grid-template-columns:34px 1fr;align-items:baseline;gap:8px;padding:12px 0;border-bottom:1px solid var(--line)}
+.clues b{font-family:var(--display);font-weight:900;font-size:26px;line-height:1;color:var(--accent)}
+.clues li.locked{color:var(--muted)} .clues li.locked b{color:var(--line)}
+.clues li.new{animation:land .7s var(--ease)}
+.clues span{max-width:60ch}
+.guess{display:flex;flex-direction:column;gap:10px}
+.missed{font-size:13px;color:var(--muted);margin:0}
+.missed s{color:var(--ink);text-decoration-color:var(--accent)}
+.answer{font-family:var(--display);font-weight:900;font-size:clamp(40px,13cqw,72px);line-height:.92;text-transform:uppercase;margin:6px 0 0;text-wrap:balance}
+.pool{border-top:0}
+body.pre #game{display:none}
+</style>
+</head>
+<body class="pre">
+<main>
+  <a class="back" href="../">← All games</a>
+  <header><h1 class="mark">Who Am <b>I?</b></h1></header>
+  <section class="intro" id="intro">
+    <div class="eyebrow">MLB mystery player · six clues</div>
+    <div class="big" style="--k:34" aria-hidden="true">6</div>
+    <h2 class="pitch">Six clues. One player. How fast can you name him?</h2>
+    <ol class="steps">
+      <li><b>1</b><span>You get one clue about a mystery MLB player.</span></li>
+      <li><b>2</b><span>Type a name and tap him in the list. A wrong guess unlocks the next clue.</span></li>
+      <li><b>3</b><span>The clues get easier. Miss on the sixth and the answer is revealed.</span></li>
+    </ol>
+    <p class="note">There is one new player every day, the same for everyone, plus as many random ones as you want.</p>
+    <div class="actions"><button class="btn primary big2" id="daily" disabled>Loading players</button><button class="btn big2" id="random" disabled>Random player</button></div>
+    <p class="note num" id="stats"></p>
+  </section>
+  <section id="game" style="display:flex;flex-direction:column;gap:18px">
+    <div class="board" id="board" aria-live="polite"></div>
+    <div class="guess" id="guess"></div>
+    <ol class="clues" id="clues"></ol>
+  </section>
+  <details><summary>How it works</summary>
+    <p><strong>Who can be the mystery player.</strong> About 540 well-known players who debuted in 1920 or later: Hall of Famers, five-time All-Stars, and anyone with 2,000 hits, 300 home runs, 180 wins, 2,200 strikeouts or 300 saves.</p>
+    <p><strong>Who you can guess.</strong> About 5,000 players with a real career, so the name list does not give the answer away.</p>
+    <p><strong>Where the clues come from.</strong> Career records through the 2025 season. Awards counted are MVP, Cy Young, Gold Glove, Silver Slugger and Rookie of the Year. Team names are the ones used in the years he played there.</p>
+  </details>
+</main>
+<script>
+const CLUES=6, DAY0=20782; /* 2026-11-25 is puzzle No. 1 */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fold=s=>s.toLowerCase().normalize("NFD").replace(/[^a-z ]/g,"");
+let A=[],N=[],KEYS=[],S=null;
+const today=()=>{const d=new Date();return Math.floor((d.getTime()-d.getTimezoneOffset()*60000)/86400000)};
+const store={get(){try{return JSON.parse(localStorage.getItem("who_mlb")||"{}")}catch(e){return{}}},set(v){try{localStorage.setItem("who_mlb",JSON.stringify(v))}catch(e){}}};
+const VERDICT=["","Mind reader","Scout's eye","Sharp","Solid work","Close call","Just in time"];
+
+function begin(mode){const day=today();let ai;
+  if(mode==="daily"){ai=((day%A.length)+A.length)%A.length;const sv=store.get();
+    if(sv.day===day&&sv.state){S=sv.state;document.body.classList.remove("pre");render();scrollTo({top:0});return}}
+  else{do{ai=Math.floor(Math.random()*A.length)}while(S&&ai===S.ai)}
+  S={mode,day,ai,shown:1,guesses:[],done:false,won:false,fresh:false};
+  document.body.classList.remove("pre");render();scrollTo({top:0})}
+function save(){if(S.mode!=="daily")return;const sv=store.get();
+  if(S.done&&!(sv.day===S.day&&sv.state&&sv.state.done)){sv.played=(sv.played||0)+1;if(S.won)sv.solved=(sv.solved||0)+1}
+  sv.day=S.day;sv.state=S;store.set(sv)}
+function guess(id){if(S.done)return;S.guesses.push(id);
+  if(id===A[S.ai][0]){S.done=true;S.won=true}
+  else if(S.shown>=CLUES){S.done=true}
+  else{S.shown++;S.fresh=true}
+  save();render();
+  if(S.done)scrollTo({top:0,behavior:"smooth"})}
+
+function render(){const a=A[S.ai],no=S.day-DAY0+1;let h="";
+  h+='<div class="eyebrow">'+(S.mode==="daily"?"Today's player · No. "+no:"Random player")+"</div>";
+  if(!S.done){h+='<div class="big" style="--k:19;line-height:1;margin:0">Clue '+S.shown+'</div><div class="chain"><span><strong>'+(CLUES-S.shown+1)+"</strong> guess"+(CLUES-S.shown?"es":"")+" left</span><span>Newest clue is on top</span></div>"}
+  else{h+='<h2 class="answer">'+esc(a[1])+"</h2>"+'<div class="chain"><span>'+a[2]+'</span></div><p class="verdict">'+(S.won?VERDICT[S.guesses.length]:"Out of clues")+"</p>"+
+    '<p class="note">'+(S.won?"You got him on clue "+S.guesses.length+" of "+CLUES+".":"He stays a mystery this time.")+(S.mode==="daily"?" A new player arrives at midnight.":"")+"</p>"}
+  $("board").innerHTML=h;
+  const n=S.done?CLUES:S.shown;
+  const rows=a[3].slice(0,n).map((c,i)=>'<li class="'+(S.fresh&&i===n-1&&!S.done?"new":"")+'"><b>'+(i+1)+"</b><span>"+esc(c)+"</span></li>");
+  if(!S.done)rows.reverse();
+  $("clues").innerHTML=rows.join("")+(n<CLUES?'<li class="locked"><b>+</b><span>'+(CLUES-n)+" more clue"+(CLUES-n>1?"s":"")+" locked</span></li>":"");
+  S.fresh=false;
+  const missed=S.guesses.filter(g=>g&&g!==a[0]).map(g=>N.find(x=>x[0]===g)[1]),skips=S.guesses.filter(g=>!g).length;
+  const miss=missed.length||skips?'<p class="missed">'+(missed.length?"Not "+missed.map(m=>"<s>"+esc(m)+"</s>").join(", ")+". ":"")+(skips?skips+" skipped.":"")+"</p>":"";
+  if(S.done){$("guess").innerHTML=miss+'<div class="actions"><button class="btn primary" data-a="random">Play a random player</button><button class="btn" data-a="copy">Copy result</button></div>';return}
+  $("guess").innerHTML=miss+'<input class="search" id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type a player\'s name" aria-label="Guess the player">'+
+    '<ul class="pool" id="sug"></ul><div class="actions"><button class="btn" data-a="skip">'+(S.shown<CLUES?"Skip to the next clue":"Give up and see the answer")+"</button></div>";
+  $("q").addEventListener("input",suggest)}
+function suggest(){const q=fold($("q").value).trim(),used=new Set(S.guesses);let out=[];
+  if(q.length>=2){const starts=[],has=[];
+    for(let i=0;i<N.length&&starts.length<8;i++){if(used.has(N[i][0]))continue;const k=KEYS[i];
+      if(k.startsWith(q)||k.split(" ").some(w=>w.startsWith(q)))starts.push(i);else if(has.length<8&&k.includes(q))has.push(i)}
+    out=starts.concat(has).slice(0,8)}
+  $("sug").innerHTML=out.map(i=>'<li><button class="pick" data-g="'+N[i][0]+'"><span class="name">'+esc(N[i][1])+'</span><span class="yrs">'+N[i][2]+"</span></button></li>").join("")+
+    (q.length>=2&&!out.length?'<li><p class="note" style="padding:12px 4px">No player matches that. Check the spelling.</p></li>':"")}
+function showStats(){const sv=store.get();$("stats").textContent=sv.played?"Daily record on this device: solved "+(sv.solved||0)+" of "+sv.played:"";
+  if(sv.day===today()&&sv.state&&sv.state.done)$("daily").textContent="See today's result"}
+
+$("guess").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.g)guess(b.dataset.g);
+  else if(b.dataset.a==="skip")guess(null);
+  else if(b.dataset.a==="random")begin("random");
+  else if(b.dataset.a==="copy"){const t="Who Am I? MLB"+(S.mode==="daily"?" No. "+(S.day-DAY0+1):"")+": "+(S.won?"got it on clue "+S.guesses.length+" of "+CLUES:"missed all "+CLUES);
+    navigator.clipboard.writeText(t).then(()=>{b.textContent="Copied"},()=>{b.textContent="Copy blocked"})}});
+$("daily").addEventListener("click",()=>begin("daily"));
+$("random").addEventListener("click",()=>begin("random"));
+
+function start(saved){
+  fetch("data.json").then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{A=d.answers;N=d.names;KEYS=N.map(x=>fold(x[1]));
+    $("daily").disabled=false;$("daily").textContent="Today's player";$("random").disabled=false;showStats();
+    if(saved&&saved.ai!==undefined&&saved.guesses){S=saved;document.body.classList.remove("pre");render()}
+  }).catch(()=>{$("daily").textContent="Could not load players";$("stats").textContent="The player list did not load. Check your connection and reload the page."})}
+window.claude?.hot?.snapshot?.(()=>document.body.classList.contains("pre")||!S?{}:S);
+window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
+</script>
+</body>
+</html>
