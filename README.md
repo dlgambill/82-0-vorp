@@ -54,7 +54,7 @@ To have a real shot at 82-0 you need a combined VORP of about 38 or more. At 41 
 
 ## Where the numbers come from
 
-Stats come from Basketball-Reference (NBA), nflverse and Pro-Football-Reference (NFL), and the Lahman Baseball Database (MLB). This is a hobby project and is not affiliated with any league, any of those sources, or the original 82-0 game.
+Stats come from Basketball-Reference (NBA), nflverse and Pro-Football-Reference game logs (NFL, back to 1950), and the Lahman Baseball Database (MLB). This is a hobby project and is not affiliated with any league, any of those sources, or the original 82-0 game.
 
 ## For the curious
 
